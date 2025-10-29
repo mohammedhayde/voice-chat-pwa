@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAgoraVoice } from '@/hooks/useAgoraVoice';
+import { useAgoraRTM } from '@/hooks/useAgoraRTM';
 
 interface VoiceChatRoomProps {
   appId: string;
   channelName: string;
   token?: string;
+  userName: string;
 }
 
-export default function VoiceChatRoom({ appId, channelName, token }: VoiceChatRoomProps) {
+export default function VoiceChatRoom({ appId, channelName, token, userName }: VoiceChatRoomProps) {
   const {
     remoteUsers,
     isJoined,
@@ -20,7 +22,20 @@ export default function VoiceChatRoom({ appId, channelName, token }: VoiceChatRo
     toggleMute,
   } = useAgoraVoice({ appId, channel: channelName, token });
 
+  const {
+    messages,
+    isConnected: isChatConnected,
+    sendMessage,
+  } = useAgoraRTM({ appId, channel: channelName, userName, token });
+
   const [error, setError] = useState<string>('');
+  const [messageText, setMessageText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleJoin = async () => {
     try {
@@ -64,16 +79,31 @@ export default function VoiceChatRoom({ appId, channelName, token }: VoiceChatRo
     }
   };
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim()) return;
+
+    try {
+      await sendMessage(messageText);
+      setMessageText('');
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Main Voice Chat Section */}
+          <div className="lg:col-span-2 bg-white rounded-3xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
               دردشة صوتية جماعية
             </h1>
             <p className="text-gray-600">غرفة: {channelName}</p>
+            <p className="text-sm text-gray-500 mt-1">مرحباً، {userName} 👋</p>
           </div>
 
           {/* Error Message */}
@@ -105,8 +135,9 @@ export default function VoiceChatRoom({ appId, channelName, token }: VoiceChatRo
                 {/* Local User */}
                 <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl p-6 text-white text-center">
                   <div className="text-4xl mb-2">🎤</div>
-                  <p className="font-semibold">أنت</p>
-                  <p className="text-sm opacity-80">{isMuted ? 'مكتوم' : 'يتحدث'}</p>
+                  <p className="font-semibold">{userName}</p>
+                  <p className="text-xs opacity-70">(أنت)</p>
+                  <p className="text-sm opacity-80 mt-1">{isMuted ? 'مكتوم' : 'يتحدث'}</p>
                 </div>
 
                 {/* Remote Users */}
@@ -172,6 +203,78 @@ export default function VoiceChatRoom({ appId, channelName, token }: VoiceChatRo
               </p>
             </div>
           )}
+          </div>
+
+          {/* Text Chat Section */}
+          <div className="lg:col-span-1 bg-white rounded-3xl shadow-2xl p-6 flex flex-col" style={{ height: '700px' }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-800">💬 الدردشة</h2>
+              <div className={`w-3 h-3 rounded-full ${isChatConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            </div>
+
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 bg-gray-50 rounded-2xl p-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-400 mt-8">
+                  <p className="text-4xl mb-2">💭</p>
+                  <p className="text-sm">لا توجد رسائل بعد</p>
+                  <p className="text-xs mt-1">ابدأ المحادثة!</p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.isLocal ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                        message.isLocal
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                          : 'bg-white border-2 border-gray-200 text-gray-800'
+                      }`}
+                    >
+                      <p className={`text-xs font-semibold mb-1 ${message.isLocal ? 'text-blue-100' : 'text-blue-600'}`}>
+                        {message.isLocal ? 'أنت' : message.userName}
+                      </p>
+                      <p className="text-sm break-words">{message.text}</p>
+                      <p className={`text-xs mt-1 ${message.isLocal ? 'text-blue-100' : 'text-gray-400'}`}>
+                        {new Date(message.timestamp).toLocaleTimeString('ar-SA', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <input
+                type="text"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="اكتب رسالة..."
+                disabled={!isChatConnected}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-full focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition disabled:bg-gray-100"
+              />
+              <button
+                type="submit"
+                disabled={!isChatConnected || !messageText.trim()}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-6 py-3 rounded-full shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                📤
+              </button>
+            </form>
+
+            {!isChatConnected && (
+              <p className="text-xs text-center text-red-500 mt-2">
+                ⚠️ الدردشة غير متصلة
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
