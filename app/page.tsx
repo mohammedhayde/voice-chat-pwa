@@ -18,13 +18,13 @@ const ROOMS = [
 ];
 
 export default function Home() {
-  // Agora Configuration (for voice)
-  const AGORA_APP_ID = 'ed407a71c9054d6197037f62849d2d87';
-  const AGORA_TOKEN = '';
+  // Agora Configuration (for voice) - من .env.local
+  const AGORA_APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID || '';
+  const AGORA_TOKEN = process.env.NEXT_PUBLIC_AGORA_TOKEN || '';
 
-  // Pusher Configuration (for text chat)
-  const PUSHER_APP_KEY = '5b2029a10320bc0f6e04';
-  const PUSHER_CLUSTER = 'eu';
+  // Pusher Configuration (for text chat) - من .env.local
+  const PUSHER_APP_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
+  const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'eu';
 
   const [userName, setUserName] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
