@@ -1,3 +1,6 @@
+# Netlify Configuration for Voice Chat PWA
+# Documentation: https://docs.netlify.com/configure-builds/file-based-configuration/
+
 [build]
   command = "npm run build"
   publish = "out"
@@ -7,12 +10,36 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
 
+# Netlify Functions Configuration
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# API Redirects - Redirect API calls to Netlify Functions
 [[redirects]]
   from = "/api/pusher/auth"
   to = "/.netlify/functions/pusher-auth"
   status = 200
   force = true
+
+# Security Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=*, microphone=*, geolocation=(), payment=()"
+
+# Cache static assets
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache images
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
