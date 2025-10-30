@@ -49,6 +49,7 @@ export default function VoiceChatRoom({
 
   const [error, setError] = useState<string>('');
   const [messageText, setMessageText] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleJoin = async () => {
     try {
@@ -130,9 +131,22 @@ export default function VoiceChatRoom({
         )}
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col-reverse lg:flex-row-reverse gap-0 min-h-0 max-w-[2000px] mx-auto w-full">
+        <div className="flex-1 flex flex-row-reverse gap-0 min-h-0 max-w-[2000px] mx-auto w-full relative">
           {/* Main Content: Voice Controls + Chat */}
-          <div className="flex-1 flex flex-col min-h-0 px-4 md:px-6 py-4">
+          <div className="flex-1 flex flex-col min-h-0 px-3 md:px-6 py-3 md:py-4">
+            {/* Mobile: Toggle Sidebar Button */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="lg:hidden mb-3 bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-2 text-white font-bold flex items-center justify-between transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <span>👥</span>
+                <span>المتصلون</span>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{connectedUsers.length}</span>
+              </span>
+              <span className="text-xl">{isSidebarOpen ? '✕' : '☰'}</span>
+            </button>
+
             {/* Voice Controls */}
             <VoiceControls
               isJoined={isJoined}
@@ -154,14 +168,32 @@ export default function VoiceChatRoom({
             />
           </div>
 
-          {/* Right Sidebar: Participants */}
-          <ParticipantsSidebar
-            userName={userName}
-            isMuted={isMuted}
-            isVoiceJoined={isJoined}
-            remoteUsers={remoteUsers}
-            connectedUsers={connectedUsers}
-          />
+          {/* Sidebar Overlay (Mobile) / Fixed Sidebar (Desktop) */}
+          <div className={`
+            fixed lg:relative inset-y-0 right-0 z-50
+            transform transition-transform duration-300 ease-in-out
+            lg:transform-none
+            ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+            w-80 lg:w-80
+          `}>
+            {/* Mobile Backdrop */}
+            {isSidebarOpen && (
+              <div
+                className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm -z-10"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )}
+
+            {/* Right Sidebar: Participants */}
+            <ParticipantsSidebar
+              userName={userName}
+              isMuted={isMuted}
+              isVoiceJoined={isJoined}
+              remoteUsers={remoteUsers}
+              connectedUsers={connectedUsers}
+              onClose={() => setIsSidebarOpen(false)}
+            />
+          </div>
         </div>
       </div>
 

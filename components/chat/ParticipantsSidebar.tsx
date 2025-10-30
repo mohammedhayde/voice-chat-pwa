@@ -7,6 +7,7 @@ interface ParticipantsSidebarProps {
   isVoiceJoined: boolean;
   remoteUsers: IAgoraRTCRemoteUser[];
   connectedUsers: ConnectedUser[];
+  onClose?: () => void;
 }
 
 export default function ParticipantsSidebar({
@@ -14,7 +15,8 @@ export default function ParticipantsSidebar({
   isMuted,
   isVoiceJoined,
   remoteUsers,
-  connectedUsers
+  connectedUsers,
+  onClose
 }: ParticipantsSidebarProps) {
 
   // Create a Set of Agora user IDs for quick lookup
@@ -27,13 +29,24 @@ export default function ParticipantsSidebar({
   };
 
   return (
-    <nav className="lg:w-80 bg-black/20 backdrop-blur-xl border-l border-white/10 flex flex-col">
+    <nav className="h-full lg:w-80 bg-black/20 backdrop-blur-xl border-l border-white/10 flex flex-col">
       <div className="px-4 py-4 border-b border-white/10 flex-shrink-0">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <span>👥</span>
-          <span>المتصلون</span>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded-full ml-auto">{connectedUsers.length}</span>
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span>👥</span>
+            <span>المتصلون</span>
+            <span className="text-xs bg-white/20 px-2 py-1 rounded-full">{connectedUsers.length}</span>
+          </h2>
+          {/* Mobile Close Button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
