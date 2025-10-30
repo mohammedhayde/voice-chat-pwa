@@ -155,13 +155,13 @@ export default function VoiceChatRoom({
           </div>
 
           {/* Right Sidebar: Participants */}
-          {isJoined && (
-            <ParticipantsSidebar
-              userName={userName}
-              isMuted={isMuted}
-              remoteUsers={remoteUsers}
-            />
-          )}
+          <ParticipantsSidebar
+            userName={userName}
+            isMuted={isMuted}
+            isVoiceJoined={isJoined}
+            remoteUsers={remoteUsers}
+            connectedUsers={connectedUsers}
+          />
         </div>
       </div>
 

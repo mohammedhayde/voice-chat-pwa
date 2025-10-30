@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
 import { ChatMessage, ConnectedUser } from '@/hooks/usePusherChat';
-import OnlineUsersBadges from './OnlineUsersBadges';
 
 interface ChatSectionProps {
   messages: ChatMessage[];
@@ -45,9 +44,6 @@ export default function ChatSection({
           isChatConnected ? 'bg-green-400 animate-pulse shadow-lg shadow-green-400/50' : 'bg-gray-400'
         }`}></div>
       </div>
-
-      {/* Online Users - Horizontal Scroll */}
-      <OnlineUsersBadges connectedUsers={connectedUsers} isChatConnected={isChatConnected} />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
