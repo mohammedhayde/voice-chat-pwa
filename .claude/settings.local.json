@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(kill:*)",
+      "Bash(killall node:*)",
+      "Bash(pkill:*)",
+      "Bash(ipconfig:*)",
+      "Bash(ip addr:*)",
+      "Bash(awk:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix mobile chat: Add Netlify Functions for Pusher authentication\n\n- Add Netlify Function for Pusher auth endpoint\n- Split VoiceChatRoom into modular components (HeaderBar, VoiceControls, ChatSection, ParticipantsSidebar, OnlineUsersBadges)\n- Replace Agora RTM with Pusher for text chat\n- Add redirect from /api/pusher/auth to Netlify Function\n- Add environment variables template (.env.example)\n- Update dependencies (@netlify/functions)\n\nThis fixes the mobile chat issue where API routes don''t work in static export.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(node -r dotenv/config test-env.js:*)",
+      "Bash(node test-env.js:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(powershell.exe -Command \"cmdkey /list | Select-String -Pattern ''git|github''\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

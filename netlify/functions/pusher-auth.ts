@@ -41,7 +41,39 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
   try {
     console.log('📦 [PARSE] Parsing request body...');
-    const body = event.body ? JSON.parse(event.body) : {};
+    console.log('📦 [PARSE] Content-Type:', event.headers['content-type']);
+    console.log('📦 [PARSE] Raw body:', event.body?.substring(0, 100));
+
+    // Parse body based on content type
+    let body: any = {};
+    const contentType = event.headers['content-type'] || '';
+
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      console.log('📦 [PARSE] Detected URL-encoded data');
+      // Parse URL-encoded data: socket_id=123&channel_name=room&user_name=name
+      const params = new URLSearchParams(event.body || '');
+      body = {
+        socket_id: params.get('socket_id'),
+        channel_name: params.get('channel_name'),
+        user_name: params.get('user_name'),
+      };
+    } else if (contentType.includes('application/json')) {
+      console.log('📦 [PARSE] Detected JSON data');
+      body = event.body ? JSON.parse(event.body) : {};
+    } else {
+      console.log('⚠️ [PARSE] Unknown content type, trying both formats...');
+      try {
+        body = event.body ? JSON.parse(event.body) : {};
+      } catch {
+        const params = new URLSearchParams(event.body || '');
+        body = {
+          socket_id: params.get('socket_id'),
+          channel_name: params.get('channel_name'),
+          user_name: params.get('user_name'),
+        };
+      }
+    }
+
     console.log('📦 [PARSE] Body keys:', Object.keys(body));
 
     const { socket_id, channel_name, user_name } = body;
