@@ -22,6 +22,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/api/agora/token"
+  to = "/.netlify/functions/agora-token"
+  status = 200
+  force = true
+
 # Security Headers
 [[headers]]
   for = "/*"

@@ -2,6 +2,7 @@ interface VoiceControlsProps {
   isJoined: boolean;
   isMuted: boolean;
   isLoading: boolean;
+  onJoin: () => void;
   onToggleMute: () => void;
   onLeave: () => void;
 }
@@ -10,6 +11,7 @@ export default function VoiceControls({
   isJoined,
   isMuted,
   isLoading,
+  onJoin,
   onToggleMute,
   onLeave
 }: VoiceControlsProps) {
@@ -65,7 +67,13 @@ export default function VoiceControls({
               <span className="text-sm">جاري الاتصال...</span>
             </div>
           ) : (
-            <div className="text-blue-200 text-sm">💡 جاري الاتصال تلقائياً...</div>
+            <button
+              onClick={onJoin}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 flex items-center gap-2"
+            >
+              <span className="text-2xl">🎤</span>
+              <span>الانضمام للدردشة الصوتية</span>
+            </button>
           )}
         </div>
       </div>

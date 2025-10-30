@@ -26,6 +26,18 @@ export default function Home() {
   const PUSHER_APP_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY || '';
   const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'eu';
 
+  // Log configuration on mount
+  if (typeof window !== 'undefined') {
+    console.log('\n═══════════════════════════════════════════');
+    console.log('🔧 [APP CONFIG] Application Configuration');
+    console.log('═══════════════════════════════════════════');
+    console.log('📡 [AGORA] App ID:', AGORA_APP_ID ? `${AGORA_APP_ID.substring(0, 8)}...${AGORA_APP_ID.substring(AGORA_APP_ID.length - 4)}` : '❌ MISSING');
+    console.log('🔑 [AGORA] Token:', AGORA_TOKEN ? 'present (static)' : 'will fetch from server');
+    console.log('💬 [PUSHER] Key:', PUSHER_APP_KEY ? `${PUSHER_APP_KEY.substring(0, 6)}...${PUSHER_APP_KEY.substring(PUSHER_APP_KEY.length - 4)}` : '❌ MISSING');
+    console.log('🌍 [PUSHER] Cluster:', PUSHER_CLUSTER);
+    console.log('═══════════════════════════════════════════\n');
+  }
+
   const [userName, setUserName] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [isConfigured, setIsConfigured] = useState(false);

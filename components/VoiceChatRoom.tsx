@@ -49,15 +49,6 @@ export default function VoiceChatRoom({
 
   const [error, setError] = useState<string>('');
   const [messageText, setMessageText] = useState('');
-  const hasAutoJoined = useRef(false);
-
-  // Auto join voice channel
-  useEffect(() => {
-    if (!hasAutoJoined.current && !isJoined && !isLoading) {
-      hasAutoJoined.current = true;
-      handleJoin();
-    }
-  }, []);
 
   const handleJoin = async () => {
     try {
@@ -147,6 +138,7 @@ export default function VoiceChatRoom({
               isJoined={isJoined}
               isMuted={isMuted}
               isLoading={isLoading}
+              onJoin={handleJoin}
               onToggleMute={handleToggleMute}
               onLeave={handleLeave}
             />
