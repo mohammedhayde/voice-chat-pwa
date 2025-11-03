@@ -1,5 +1,6 @@
 interface HeaderBarProps {
   channelName: string;
+  roomName?: string;
   userName: string;
   isJoined: boolean;
   participantsCount: number;
@@ -9,7 +10,7 @@ interface HeaderBarProps {
   onBannedUsersClick?: () => void;
 }
 
-export default function HeaderBar({ channelName, userName, isJoined, participantsCount, canModerate, onSettingsClick, onMembershipHistoryClick, onBannedUsersClick }: HeaderBarProps) {
+export default function HeaderBar({ channelName, roomName, userName, isJoined, participantsCount, canModerate, onSettingsClick, onMembershipHistoryClick, onBannedUsersClick }: HeaderBarProps) {
   const getRoomIcon = () => {
     const icons: { [key: string]: string } = {
       'room-1': '🌍', 'room-2': '👥', 'room-3': '🎮', 'room-4': '🎵', 'room-5': '📚',
@@ -19,6 +20,11 @@ export default function HeaderBar({ channelName, userName, isJoined, participant
   };
 
   const getRoomName = () => {
+    // Use provided roomName if available, otherwise fallback to predefined names
+    if (roomName) {
+      return roomName;
+    }
+
     const names: { [key: string]: string } = {
       'room-1': 'غرفة العامة', 'room-2': 'غرفة الأصدقاء', 'room-3': 'غرفة الألعاب',
       'room-4': 'غرفة الموسيقى', 'room-5': 'غرفة التعليم', 'room-6': 'غرفة الرياضة',

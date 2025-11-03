@@ -19,6 +19,7 @@ interface VoiceChatRoomProps {
   agoraToken?: string;
   agoraUid?: number;
   channelName: string;
+  roomName?: string;
   userName: string;
   userId?: number;
   roomId?: number;
@@ -30,6 +31,7 @@ export default function VoiceChatRoom({
   agoraToken,
   agoraUid,
   channelName,
+  roomName,
   userName,
   userId,
   roomId,
@@ -222,6 +224,7 @@ export default function VoiceChatRoom({
         {/* Header Bar */}
         <HeaderBar
           channelName={channelName}
+          roomName={roomName}
           userName={userName}
           isJoined={isJoined}
           participantsCount={remoteUsers.length + 1}

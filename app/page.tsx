@@ -250,6 +250,7 @@ export default function Home() {
         agoraToken={joinData.agoraToken}
         agoraUid={joinData.uid}
         channelName={joinData.channelName}
+        roomName={selectedRoomData?.name}
         userName={userName}
         userId={user?.userId ? Number(user.userId) : undefined}
         roomId={selectedRoom}
