@@ -149,7 +149,7 @@ export default function Home() {
         const channelName = `room-${roomId}`;
         const uid = Math.floor(Math.random() * 1000000);
 
-        const tokenEndpoint = `https://admirable-melba-d159b2.netlify.app/.netlify/functions/agora-token?channel=${channelName}&uid=${uid}`;
+        const tokenEndpoint = `https://un4chat.netlify.app/.netlify/functions/agora-token?channel=${channelName}&uid=${uid}`;
         const tokenResponse = await fetch(tokenEndpoint);
 
         if (!tokenResponse.ok) {
