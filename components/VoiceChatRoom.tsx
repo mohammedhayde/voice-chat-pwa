@@ -158,7 +158,11 @@ export default function VoiceChatRoom({
   const handleLeave = async () => {
     try {
       setError('');
+      console.log('🚪 [LEAVE] Starting leave process...');
+
+      // Leave voice channel first
       await leaveChannel();
+      console.log('✅ [LEAVE] Left voice channel');
 
       // If roomId is provided, notify API about leaving
       if (roomId) {
@@ -166,9 +170,19 @@ export default function VoiceChatRoom({
         await leaveChatRoom(roomId);
         console.log('✅ [API] Successfully left room');
       }
+
+      // Show success message
+      toast.success('تم مغادرة الغرفة بنجاح');
+
+      // Redirect to home page after a short delay
+      console.log('🔄 Redirecting to home page...');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     } catch (err) {
       setError('فشل مغادرة الغرفة');
-      console.error(err);
+      console.error('❌ [LEAVE] Error:', err);
+      toast.error('حدث خطأ أثناء المغادرة');
     }
   };
 
