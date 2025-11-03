@@ -137,6 +137,36 @@ export default function VoiceChatRoom({
       setError('');
       setPermissionDenied(false);
 
+      // Force microphone permission request by calling getUserMedia first
+      // This ensures browser shows permission dialog even after previous denial
+      console.log('🎤 [PERMISSION] Requesting microphone access explicitly...');
+      let testStream: MediaStream | null = null;
+      try {
+        testStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        console.log('✅ [PERMISSION] Microphone permission granted');
+
+        // Stop the test stream immediately, we'll create proper track via Agora
+        testStream.getTracks().forEach(track => track.stop());
+        testStream = null;
+      } catch (permErr: any) {
+        console.error('❌ [PERMISSION] Microphone access denied:', permErr);
+        setPermissionDenied(true);
+
+        if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+          setError('🚫 تم رفض صلاحية الميكروفون - لتفعيلها:\n1️⃣ انقر على أيقونة القفل 🔒 بجانب عنوان الموقع\n2️⃣ اختر "السماح" أو "Allow" للميكروفون\n3️⃣ انقر "إعادة المحاولة" مرة أخرى');
+        } else if (permErr.name === 'NotFoundError') {
+          setError('🎤 لم يتم العثور على ميكروفون - تأكد من توصيل ميكروفون بجهازك');
+        } else {
+          setError(`❌ خطأ في الوصول للميكروفون: ${permErr.message}`);
+        }
+
+        toast.error('يرجى السماح بصلاحية الميكروفون من المتصفح', {
+          duration: 8000,
+          icon: '🎤',
+        });
+        return; // Don't proceed with join
+      }
+
       await joinChannel();
     } catch (err: any) {
       console.error('Agora error:', err);
