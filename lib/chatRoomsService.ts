@@ -1,7 +1,7 @@
 // Chat Rooms Service - يتصل بالـ API حسب التوثيق
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/auth', '') || 'https://backend-chatroom-api.fly.dev/api';
-const CHATROOMS_URL = `${API_BASE_URL}/chatrooms`;
+const CHATROOMS_URL = `${API_BASE_URL}/ChatRooms`;
 
 export interface ChatRoom {
   id: number;
