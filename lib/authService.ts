@@ -77,52 +77,29 @@ export async function login(
 
 // تسجيل دخول كضيف
 export async function guestLogin(): Promise<AuthResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/guest-login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  const response = await fetch(`${API_BASE_URL}/guest-login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'فشل في تسجيل الدخول كضيف');
-    }
-
-    // حفظ الـ tokens
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    localStorage.setItem('userId', data.userId.toString());
-    localStorage.setItem('username', data.username);
-    localStorage.setItem('isGuest', 'true');
-
-    return data;
-  } catch (error) {
-    // Fallback: إنشاء جلسة ضيف بدون Backend
-    console.warn('⚠️ Backend unavailable, creating offline guest session');
-    const guestId = Math.floor(Math.random() * 1000000);
-    const guestData: AuthResponse = {
-      userId: guestId,
-      username: `Guest_${guestId}`,
-      email: '',
-      role: 'Guest',
-      accessToken: `offline-guest-${guestId}-${Date.now()}`,
-      refreshToken: `offline-refresh-${guestId}-${Date.now()}`,
-    };
-
-    // حفظ الـ tokens
-    localStorage.setItem('accessToken', guestData.accessToken);
-    localStorage.setItem('refreshToken', guestData.refreshToken);
-    localStorage.setItem('userId', guestData.userId.toString());
-    localStorage.setItem('username', guestData.username);
-    localStorage.setItem('isGuest', 'true');
-    localStorage.setItem('offlineMode', 'true');
-
-    console.log('✅ Offline guest mode activated:', guestData.username);
-    return guestData;
+  if (!response.ok) {
+    // إذا فشل تسجيل الدخول كضيف، نعرض رسالة خطأ واضحة
+    throw new Error(data.message || 'فشل في تسجيل الدخول كضيف. يرجى التأكد من أن الخادم متاح.');
   }
+
+  // حفظ الـ tokens الصحيحة من الخادم
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('refreshToken', data.refreshToken);
+  localStorage.setItem('userId', data.userId.toString());
+  localStorage.setItem('username', data.username);
+  localStorage.setItem('isGuest', 'true');
+
+  console.log('✅ Guest login successful:', data.username);
+  return data;
 }
 
 // تحديث الـ Access Token
