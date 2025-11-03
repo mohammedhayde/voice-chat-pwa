@@ -4,13 +4,13 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: "دردشة صوتية جماعية",
-  description: "تطبيق PWA للدردشة الصوتية الجماعية باستخدام Agora RTC",
+  title: "غرف الدردشة الصوتية",
+  description: "منصة تواصل صوتي جماعي لإنشاء غرف دردشة والتحدث مع الأصدقاء في الوقت الفعلي",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "دردشة صوتية",
+    title: "غرف الدردشة",
   },
 };
 

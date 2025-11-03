@@ -443,10 +443,12 @@ export default function Home() {
             </h3>
             <ul className="space-y-3">
               {[
-                'محادثة صوتية فورية عبر Agora',
-                'دردشة نصية في الوقت الفعلي عبر Pusher',
+                'محادثة صوتية فورية عالية الجودة',
+                'دردشة نصية في الوقت الفعلي',
                 'قائمة المستخدمين المتصلين',
                 '10 غرف متنوعة للاختيار',
+                'إشعارات صوتية عند وصول رسائل',
+                'إمكانية إنشاء غرف خاصة',
               ].map((feature, i) => (
                 <li key={i} className="text-white/80 flex items-start gap-2">
                   <span className="text-green-400 mt-1">●</span>

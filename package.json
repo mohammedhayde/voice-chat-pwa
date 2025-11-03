@@ -1,6 +1,7 @@
 {
-  "name": "voice-chat-pwa",
-  "version": "0.1.0",
+  "name": "voice-chat-rooms",
+  "version": "1.0.0",
+  "description": "منصة غرف الدردشة الصوتية الجماعية",
   "private": true,
   "scripts": {
     "dev": "next dev",

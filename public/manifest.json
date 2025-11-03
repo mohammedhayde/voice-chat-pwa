@@ -1,7 +1,7 @@
 {
-  "name": "دردشة صوتية جماعية",
-  "short_name": "دردشة صوتية",
-  "description": "تطبيق دردشة صوتية جماعية باستخدام Agora",
+  "name": "غرف الدردشة الصوتية",
+  "short_name": "غرف الدردشة",
+  "description": "منصة تواصل صوتي جماعي لإنشاء غرف دردشة والتحدث مع الأصدقاء في الوقت الفعلي",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
