@@ -230,8 +230,17 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
 
       // Create and publish local audio track
       console.log('🎙️ [VOICE] Requesting microphone access...');
-      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      console.log('✅ [VOICE] Microphone access granted!');
+      let audioTrack: IMicrophoneAudioTrack;
+      try {
+        audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        console.log('✅ [VOICE] Microphone access granted!');
+      } catch (micError: any) {
+        console.error('❌ [VOICE] Microphone access denied or failed:', micError);
+        // Leave the channel immediately if mic access fails
+        await client.leave();
+        console.log('🚪 [VOICE] Left channel due to microphone error');
+        throw micError;
+      }
 
       setLocalAudioTrack(audioTrack);
       localAudioTrackRef.current = audioTrack; // Store in ref for cleanup
