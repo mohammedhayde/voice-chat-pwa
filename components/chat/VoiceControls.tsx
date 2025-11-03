@@ -1,20 +1,24 @@
 interface VoiceControlsProps {
   isJoined: boolean;
   isMuted: boolean;
+  isDeafened: boolean;
   isLoading: boolean;
   isSpeaking?: boolean;
   onJoin: () => void;
   onToggleMute: () => void;
+  onToggleDeafen: () => void;
   onLeave: () => void;
 }
 
 export default function VoiceControls({
   isJoined,
   isMuted,
+  isDeafened,
   isLoading,
   isSpeaking = false,
   onJoin,
   onToggleMute,
+  onToggleDeafen,
   onLeave
 }: VoiceControlsProps) {
   return (
@@ -53,7 +57,7 @@ export default function VoiceControls({
               <button
                 onClick={onToggleMute}
                 disabled={isLoading}
-                className={`font-bold py-2 px-4 sm:px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 text-sm sm:text-base flex-1 sm:flex-none ${
+                className={`font-bold py-2 px-3 sm:px-4 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 text-sm sm:text-base ${
                   isMuted
                     ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white'
                     : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white'
@@ -63,11 +67,23 @@ export default function VoiceControls({
               </button>
 
               <button
+                onClick={onToggleDeafen}
+                disabled={isLoading}
+                className={`font-bold py-2 px-3 sm:px-4 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 text-sm sm:text-base ${
+                  isDeafened
+                    ? 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
+                    : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white'
+                }`}
+              >
+                {isDeafened ? '🔊 تشغيل الصوت' : '🔇 إيقاف الصوت'}
+              </button>
+
+              <button
                 onClick={onLeave}
                 disabled={isLoading}
-                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold py-2 px-4 sm:px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 text-sm sm:text-base flex-1 sm:flex-none"
+                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold py-2 px-3 sm:px-4 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 text-sm sm:text-base"
               >
-                {isLoading ? '⏳ جاري...' : '🚪 مغادرة'}
+                {isLoading ? '⏳' : '🚪 خروج'}
               </button>
             </>
           ) : isLoading ? (

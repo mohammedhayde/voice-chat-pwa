@@ -18,10 +18,12 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isDeafened, setIsDeafened] = useState(false); // Deafen state (stop hearing others)
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false); // Voice activity for local user
   const [speakingUsers, setSpeakingUsers] = useState<Set<number | string>>(new Set()); // Voice activity for remote users
   const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const isDeafenedRef = useRef<boolean>(false);
 
   useEffect(() => {
     console.log('🔧 [AGORA INIT] Initializing Agora client...');
@@ -59,8 +61,13 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
             console.log('✅ [AGORA EVENT] Subscribed to user:', user.uid);
 
             if (mediaType === 'audio') {
-              user.audioTrack?.play();
-              console.log('🔊 [AGORA EVENT] Playing audio from user:', user.uid);
+              // Only play if not deafened
+              if (!isDeafenedRef.current) {
+                user.audioTrack?.play();
+                console.log('🔊 [AGORA EVENT] Playing audio from user:', user.uid);
+              } else {
+                console.log('🔇 [AGORA EVENT] Audio subscribed but not playing (deafened)');
+              }
             }
             setRemoteUsers((prevUsers) => [...prevUsers.filter(u => u.uid !== user.uid), user]);
           } catch (error) {
@@ -269,17 +276,46 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
     }
   };
 
+  const toggleDeafen = async () => {
+    try {
+      const newDeafenState = !isDeafened;
+      console.log(`🔇 [DEAFEN] Toggling deafen: ${isDeafened} → ${newDeafenState}`);
+
+      // Update ref immediately for event handlers
+      isDeafenedRef.current = newDeafenState;
+      setIsDeafened(newDeafenState);
+
+      // Toggle audio playback for all remote users
+      remoteUsers.forEach((user) => {
+        if (user.audioTrack) {
+          if (newDeafenState) {
+            user.audioTrack.stop();
+            console.log(`🔇 [DEAFEN] Stopped audio from user: ${user.uid}`);
+          } else {
+            user.audioTrack.play();
+            console.log(`🔊 [DEAFEN] Resumed audio from user: ${user.uid}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Failed to toggle deafen:', error);
+      throw error;
+    }
+  };
+
   return {
     client,
     localAudioTrack,
     remoteUsers,
     isJoined,
     isMuted,
+    isDeafened,
     isLoading,
     isSpeaking,
     speakingUsers,
     joinChannel,
     leaveChannel,
     toggleMute,
+    toggleDeafen,
   };
 };

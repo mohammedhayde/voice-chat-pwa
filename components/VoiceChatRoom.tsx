@@ -45,12 +45,14 @@ export default function VoiceChatRoom({
     remoteUsers,
     isJoined,
     isMuted,
+    isDeafened,
     isLoading,
     isSpeaking,
     speakingUsers,
     joinChannel,
     leaveChannel,
     toggleMute,
+    toggleDeafen,
   } = useAgoraVoice({ appId: agoraAppId, channel: channelName, token: agoraToken, uid: agoraUid });
 
   // Update refs when values change
@@ -198,6 +200,16 @@ export default function VoiceChatRoom({
     }
   };
 
+  const handleToggleDeafen = async () => {
+    try {
+      setError('');
+      await toggleDeafen();
+    } catch (err) {
+      setError('فشل تبديل الاستماع');
+      console.error(err);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim()) return;
@@ -265,10 +277,12 @@ export default function VoiceChatRoom({
             <VoiceControls
               isJoined={isJoined}
               isMuted={isMuted}
+              isDeafened={isDeafened}
               isLoading={isLoading}
               isSpeaking={isSpeaking}
               onJoin={handleJoin}
               onToggleMute={handleToggleMute}
+              onToggleDeafen={handleToggleDeafen}
               onLeave={handleLeave}
             />
 
