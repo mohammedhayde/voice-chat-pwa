@@ -1,6 +1,10 @@
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+
 interface HeaderBarProps {
   channelName: string;
   roomName?: string;
+  roomId?: number;
   userName: string;
   isJoined: boolean;
   participantsCount: number;
@@ -10,7 +14,8 @@ interface HeaderBarProps {
   onBannedUsersClick?: () => void;
 }
 
-export default function HeaderBar({ channelName, roomName, userName, isJoined, participantsCount, canModerate, onSettingsClick, onMembershipHistoryClick, onBannedUsersClick }: HeaderBarProps) {
+export default function HeaderBar({ channelName, roomName, roomId, userName, isJoined, participantsCount, canModerate, onSettingsClick, onMembershipHistoryClick, onBannedUsersClick }: HeaderBarProps) {
+  const [isSharing, setIsSharing] = useState(false);
   const getRoomIcon = () => {
     const icons: { [key: string]: string } = {
       'room-1': '🌍', 'room-2': '👥', 'room-3': '🎮', 'room-4': '🎵', 'room-5': '📚',
@@ -34,6 +39,60 @@ export default function HeaderBar({ channelName, roomName, userName, isJoined, p
     return names[channelName] || 'غرفة الدردشة';
   };
 
+  const handleShareRoom = async () => {
+    if (!roomId) {
+      toast.error('لا يمكن مشاركة رابط الغرفة');
+      return;
+    }
+
+    setIsSharing(true);
+
+    try {
+      // Create room URL
+      const roomUrl = `${window.location.origin}/?room=${roomId}`;
+      const shareText = `انضم إلى غرفة "${getRoomName()}" في تطبيق غرف الدردشة الصوتية`;
+
+      // Check if Web Share API is supported
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: getRoomName(),
+            text: shareText,
+            url: roomUrl,
+          });
+          toast.success('تمت المشاركة بنجاح!');
+        } catch (err: any) {
+          // User cancelled share
+          if (err.name !== 'AbortError') {
+            // Fallback to copy
+            await copyToClipboard(roomUrl);
+          }
+        }
+      } else {
+        // Fallback: Copy to clipboard
+        await copyToClipboard(roomUrl);
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      toast.error('فشل في مشاركة الرابط');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('تم نسخ رابط الغرفة! 🔗', {
+        duration: 3000,
+        icon: '📋',
+      });
+    } catch (err) {
+      console.error('Copy error:', err);
+      toast.error('فشل في نسخ الرابط');
+    }
+  };
+
   return (
     <div className="bg-black/20 backdrop-blur-xl border-b border-white/10 flex-shrink-0">
       <div className="max-w-[2000px] mx-auto px-4 md:px-6 py-4">
@@ -52,7 +111,7 @@ export default function HeaderBar({ channelName, roomName, userName, isJoined, p
           </div>
 
           {/* Status & Stats */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl border ${
               isJoined
                 ? 'bg-green-500/20 border-green-500/50 text-green-100'
@@ -67,6 +126,17 @@ export default function HeaderBar({ channelName, roomName, userName, isJoined, p
               <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white">
                 <span className="font-semibold text-sm">👥 {participantsCount}</span>
               </div>
+            )}
+            {/* Share Room Button */}
+            {roomId && (
+              <button
+                onClick={handleShareRoom}
+                disabled={isSharing}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600/20 hover:bg-blue-600/30 backdrop-blur-xl border border-blue-500/30 text-blue-200 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="مشاركة رابط الغرفة"
+              >
+                {isSharing ? '⏳' : '🔗'}
+              </button>
             )}
             {canModerate && onBannedUsersClick && (
               <button

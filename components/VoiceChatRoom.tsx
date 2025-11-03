@@ -225,6 +225,7 @@ export default function VoiceChatRoom({
         <HeaderBar
           channelName={channelName}
           roomName={roomName}
+          roomId={roomId}
           userName={userName}
           isJoined={isJoined}
           participantsCount={remoteUsers.length + 1}
