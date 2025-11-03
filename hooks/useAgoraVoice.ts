@@ -23,6 +23,8 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
   const [isSpeaking, setIsSpeaking] = useState(false); // Voice activity for local user
   const [speakingUsers, setSpeakingUsers] = useState<Set<number | string>>(new Set()); // Voice activity for remote users
   const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const localAudioTrackRef = useRef<IMicrophoneAudioTrack | null>(null);
+  const volumeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isDeafenedRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -126,15 +128,49 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
     initAgoraClient();
 
     return () => {
+      console.log('🧹 [AGORA CLEANUP] Cleaning up Agora resources...');
+
+      // Clear volume interval
+      if (volumeIntervalRef.current) {
+        clearInterval(volumeIntervalRef.current);
+        volumeIntervalRef.current = null;
+        console.log('✅ [AGORA CLEANUP] Volume interval cleared');
+      }
+
+      // Close local audio track
+      if (localAudioTrackRef.current) {
+        localAudioTrackRef.current.close();
+        localAudioTrackRef.current = null;
+        console.log('✅ [AGORA CLEANUP] Local audio track closed');
+      }
+
+      // Stop all remote audio tracks
+      if (clientRef.current) {
+        const remoteUsers = clientRef.current.remoteUsers;
+        remoteUsers.forEach((user) => {
+          if (user.audioTrack) {
+            user.audioTrack.stop();
+            console.log(`✅ [AGORA CLEANUP] Stopped audio from user: ${user.uid}`);
+          }
+        });
+      }
+
+      // Remove event listeners
       if (clientRef.current) {
         clientRef.current.removeAllListeners();
+        console.log('✅ [AGORA CLEANUP] Event listeners removed');
       }
-      if (localAudioTrack) {
-        localAudioTrack.close();
-      }
+
+      // Leave channel if connected
       if (clientRef.current && clientRef.current.connectionState !== 'DISCONNECTED') {
-        clientRef.current.leave();
+        clientRef.current.leave().then(() => {
+          console.log('✅ [AGORA CLEANUP] Left channel');
+        }).catch((err) => {
+          console.error('❌ [AGORA CLEANUP] Failed to leave channel:', err);
+        });
       }
+
+      console.log('🧹 [AGORA CLEANUP] Cleanup complete');
     };
   }, []);
 
@@ -198,6 +234,7 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
       console.log('✅ [VOICE] Microphone access granted!');
 
       setLocalAudioTrack(audioTrack);
+      localAudioTrackRef.current = audioTrack; // Store in ref for cleanup
 
       console.log('📡 [VOICE] Publishing audio track...');
       await client.publish([audioTrack]);
@@ -209,14 +246,14 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
 
       // Setup local volume monitoring
       const volumeInterval = setInterval(() => {
-        if (audioTrack) {
-          const volumeLevel = audioTrack.getVolumeLevel();
+        if (localAudioTrackRef.current) {
+          const volumeLevel = localAudioTrackRef.current.getVolumeLevel();
           setIsSpeaking(volumeLevel > 0.1); // 10% threshold
         }
       }, 200); // Check every 200ms
 
-      // Store interval ID to clear later
-      (audioTrack as any)._volumeInterval = volumeInterval;
+      // Store interval ID in ref for cleanup
+      volumeIntervalRef.current = volumeInterval;
 
       setIsJoined(true);
       console.log('🎉 [VOICE] Voice chat joined successfully!');
@@ -240,22 +277,35 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
     try {
       setIsLoading(true);
 
-      if (localAudioTrack) {
-        // Clear volume monitoring interval
-        const volumeInterval = (localAudioTrack as any)._volumeInterval;
-        if (volumeInterval) {
-          clearInterval(volumeInterval);
-        }
-
-        localAudioTrack.close();
-        setLocalAudioTrack(null);
+      // Clear volume monitoring interval
+      if (volumeIntervalRef.current) {
+        clearInterval(volumeIntervalRef.current);
+        volumeIntervalRef.current = null;
+        console.log('✅ [LEAVE] Volume interval cleared');
       }
+
+      // Close local audio track
+      if (localAudioTrackRef.current) {
+        localAudioTrackRef.current.close();
+        localAudioTrackRef.current = null;
+        setLocalAudioTrack(null);
+        console.log('✅ [LEAVE] Local audio track closed');
+      }
+
+      // Stop all remote audio tracks
+      remoteUsers.forEach((user) => {
+        if (user.audioTrack) {
+          user.audioTrack.stop();
+          console.log(`✅ [LEAVE] Stopped audio from user: ${user.uid}`);
+        }
+      });
 
       await client.leave();
       setIsJoined(false);
       setRemoteUsers([]);
       setSpeakingUsers(new Set());
       setIsSpeaking(false);
+      console.log('✅ [LEAVE] Successfully left channel');
     } catch (error) {
       console.error('Failed to leave channel:', error);
       throw error;
@@ -265,10 +315,10 @@ export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps
   };
 
   const toggleMute = async () => {
-    if (!localAudioTrack) return;
+    if (!localAudioTrackRef.current) return;
 
     try {
-      await localAudioTrack.setEnabled(isMuted);
+      await localAudioTrackRef.current.setEnabled(isMuted);
       setIsMuted(!isMuted);
     } catch (error) {
       console.error('Failed to toggle mute:', error);
