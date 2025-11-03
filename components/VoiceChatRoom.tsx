@@ -116,17 +116,24 @@ export default function VoiceChatRoom({
     onMuted: (reason, expiresAt) => {
       const until = expiresAt ? new Date(expiresAt).toLocaleString('ar-SA') : 'دائماً';
       toast.error(`🔇 تم كتمك من الغرفة - السبب: ${reason} - حتى: ${until}`, { duration: 5000 });
-      setError(`🔇 تم كتمك من الغرفة - السبب: ${reason} - حتى: ${until}`);
     }
   });
 
-  const [error, setError] = useState<string>('');
+  // Voice connection state management
+  type VoiceConnectionState =
+    | { status: 'idle' }
+    | { status: 'connecting' }
+    | { status: 'connected' }
+    | { status: 'permission_denied' }
+    | { status: 'mic_not_found' }
+    | { status: 'error'; message: string };
+
+  const [voiceState, setVoiceState] = useState<VoiceConnectionState>({ status: 'idle' });
   const [messageText, setMessageText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRoomMembershipHistoryOpen, setIsRoomMembershipHistoryOpen] = useState(false);
   const [isBannedUsersOpen, setIsBannedUsersOpen] = useState(false);
-  const [permissionDenied, setPermissionDenied] = useState(false);
 
   // Check if current user is muted by finding them in connectedUsers
   const currentUser = connectedUsers.find(u => u.userId === userId);
@@ -134,12 +141,10 @@ export default function VoiceChatRoom({
 
   const handleJoin = async () => {
     try {
-      setError('');
-      setPermissionDenied(false);
+      setVoiceState({ status: 'connecting' });
 
       // Force microphone permission request by calling getUserMedia first
-      // This ensures browser shows permission dialog even after previous denial
-      console.log('🎤 [PERMISSION] Requesting microphone access explicitly...');
+      console.log('🎤 [PERMISSION] Requesting microphone access...');
       let testStream: MediaStream | null = null;
       try {
         testStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -150,66 +155,66 @@ export default function VoiceChatRoom({
         testStream = null;
       } catch (permErr: any) {
         console.error('❌ [PERMISSION] Microphone access denied:', permErr);
-        setPermissionDenied(true);
 
         if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
-          setError('🚫 تم رفض صلاحية الميكروفون');
+          setVoiceState({ status: 'permission_denied' });
+          toast.error('تم رفض صلاحية الميكروفون', { duration: 5000, icon: '🎤' });
         } else if (permErr.name === 'NotFoundError') {
-          setError('🎤 لم يتم العثور على ميكروفون');
+          setVoiceState({ status: 'mic_not_found' });
+          toast.error('لم يتم العثور على ميكروفون', { duration: 5000, icon: '🎤' });
         } else {
-          setError(`❌ خطأ في الوصول للميكروفون`);
+          setVoiceState({ status: 'error', message: permErr.message || 'خطأ في الوصول للميكروفون' });
+          toast.error('خطأ في الوصول للميكروفون', { duration: 5000, icon: '❌' });
         }
-
-        toast.error('تم رفض صلاحية الميكروفون', {
-          duration: 5000,
-          icon: '🎤',
-        });
         return; // Don't proceed with join
       }
 
       await joinChannel();
+      setVoiceState({ status: 'connected' });
     } catch (err: any) {
       console.error('Agora error:', err);
-      if (err.code === 'CAN_NOT_GET_GATEWAY_SERVER' || err.message?.includes('dynamic use static key')) {
-        setError('⚠️ يتطلب Token صالح للاختبار');
-      } else if (err.code === 'INVALID_PARAMS') {
-        setError('App ID غير صحيح');
-      } else if (err.code === 'DEVICE_NOT_FOUND' || err.message?.includes('device not found')) {
-        setError('🎤 لم يتم العثور على ميكروفون');
-      } else if (err.code === 'PERMISSION_DENIED' || err.message?.includes('Permission denied') || err.name === 'NotAllowedError') {
-        setPermissionDenied(true);
 
-        // إخراج المستخدم من الغرفة
-        if (isJoined) {
-          try {
-            await leaveChannel();
-          } catch (leaveErr) {
-            console.error('Failed to leave after permission denied:', leaveErr);
-          }
+      // إخراج المستخدم من الغرفة في حالة الخطأ
+      if (isJoined) {
+        try {
+          await leaveChannel();
+        } catch (leaveErr) {
+          console.error('Failed to leave after error:', leaveErr);
         }
+      }
 
-        setError('🚫 تم رفض صلاحية الميكروفون');
-        toast.error('تم رفض صلاحية الميكروفون', {
-          duration: 5000,
-          icon: '🎤',
-        });
+      if (err.code === 'CAN_NOT_GET_GATEWAY_SERVER' || err.message?.includes('dynamic use static key')) {
+        setVoiceState({ status: 'error', message: 'يتطلب Token صالح' });
+      } else if (err.code === 'INVALID_PARAMS') {
+        setVoiceState({ status: 'error', message: 'App ID غير صحيح' });
+      } else if (err.code === 'DEVICE_NOT_FOUND' || err.message?.includes('device not found')) {
+        setVoiceState({ status: 'mic_not_found' });
+      } else if (err.code === 'PERMISSION_DENIED' || err.message?.includes('Permission denied') || err.name === 'NotAllowedError') {
+        setVoiceState({ status: 'permission_denied' });
+        toast.error('تم رفض صلاحية الميكروفون', { duration: 5000, icon: '🎤' });
       } else {
-        setError(`فشل الانضمام: ${err.message || 'خطأ غير معروف'}`);
+        setVoiceState({ status: 'error', message: err.message || 'خطأ غير معروف' });
       }
     }
   };
 
   // Auto-join voice chat when SignalR connects
   useEffect(() => {
-    if (isChatConnected && !isJoined && !isLoading && !permissionDenied) {
+    const shouldAutoJoin = isChatConnected &&
+                          !isJoined &&
+                          !isLoading &&
+                          voiceState.status !== 'permission_denied' &&
+                          voiceState.status !== 'connecting';
+
+    if (shouldAutoJoin) {
       console.log('🎤 [AUTO-JOIN] SignalR connected, auto-joining voice chat...');
       handleJoin();
     }
-  }, [isChatConnected, isJoined, isLoading, permissionDenied]);
+  }, [isChatConnected, isJoined, isLoading, voiceState.status]);
 
   const handleLeave = async () => {
     try {
-      setError('');
+      setVoiceState({ status: 'idle' });
       console.log('🚪 [LEAVE] Starting leave process...');
 
       // Leave voice channel first
@@ -232,7 +237,6 @@ export default function VoiceChatRoom({
         window.location.href = '/';
       }, 500);
     } catch (err) {
-      setError('فشل مغادرة الغرفة');
       console.error('❌ [LEAVE] Error:', err);
       toast.error('حدث خطأ أثناء المغادرة');
     }
@@ -240,21 +244,19 @@ export default function VoiceChatRoom({
 
   const handleToggleMute = async () => {
     try {
-      setError('');
       await toggleMute();
     } catch (err) {
-      setError('فشل تبديل كتم الصوت');
       console.error(err);
+      toast.error('فشل تبديل كتم الصوت');
     }
   };
 
   const handleToggleDeafen = async () => {
     try {
-      setError('');
       await toggleDeafen();
     } catch (err) {
-      setError('فشل تبديل الاستماع');
       console.error(err);
+      toast.error('فشل تبديل الاستماع');
     }
   };
 
@@ -267,7 +269,7 @@ export default function VoiceChatRoom({
       setMessageText('');
     } catch (err: any) {
       console.error('Failed to send message:', err);
-      setError(err.message || 'فشل في إرسال الرسالة');
+      toast.error(err.message || 'فشل في إرسال الرسالة');
     }
   };
 
@@ -295,23 +297,23 @@ export default function VoiceChatRoom({
           onBannedUsersClick={() => setIsBannedUsersOpen(true)}
         />
 
-        {/* Error Message */}
-        {error && (
+        {/* Voice State Message */}
+        {voiceState.status !== 'idle' && voiceState.status !== 'connected' && voiceState.status !== 'connecting' && (
           <div className="mx-4 md:mx-6 mt-4">
             <div className="bg-red-500/20 border border-red-500/50 text-red-100 px-4 py-3 rounded-xl backdrop-blur-xl animate-shake max-w-3xl mx-auto">
-              <div className="text-center whitespace-pre-line mb-3">
-                {error}
+              <div className="text-center mb-3">
+                {voiceState.status === 'permission_denied' && '🚫 تم رفض صلاحية الميكروفون'}
+                {voiceState.status === 'mic_not_found' && '🎤 لم يتم العثور على ميكروفون'}
+                {voiceState.status === 'error' && `❌ ${voiceState.message}`}
               </div>
-              {permissionDenied && (
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleJoin}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105"
-                  >
-                    🔄 إعادة المحاولة
-                  </button>
-                </div>
-              )}
+              <div className="flex justify-center">
+                <button
+                  onClick={handleJoin}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105"
+                >
+                  🔄 إعادة المحاولة
+                </button>
+              </div>
             </div>
           </div>
         )}
