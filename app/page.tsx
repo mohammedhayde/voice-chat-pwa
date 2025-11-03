@@ -197,6 +197,35 @@ export default function Home() {
     }
   };
 
+  // Auto-join room from URL parameter (?room=X)
+  useEffect(() => {
+    if (!isAuthenticated || roomsLoading || rooms.length === 0 || joiningRoom || selectedRoom) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomIdParam = urlParams.get('room');
+
+    if (roomIdParam) {
+      const roomId = parseInt(roomIdParam, 10);
+
+      // Check if room exists
+      const roomExists = rooms.find(r => r.id === roomId);
+
+      if (roomExists) {
+        console.log('🔗 [AUTO-JOIN] Auto-joining room from URL:', roomId);
+        handleRoomSelect(roomId);
+
+        // Clean up URL (remove ?room parameter)
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        console.warn('⚠️ [AUTO-JOIN] Room not found:', roomId);
+        setJoinError(`الغرفة رقم ${roomId} غير موجودة`);
+
+        // Clean up URL even if room not found
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [isAuthenticated, roomsLoading, rooms, joiningRoom, selectedRoom]);
+
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreatingRoom(true);
