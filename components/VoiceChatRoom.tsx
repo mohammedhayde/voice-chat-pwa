@@ -137,26 +137,6 @@ export default function VoiceChatRoom({
       setError('');
       setPermissionDenied(false);
 
-      // Check microphone permission status before attempting to join
-      if (navigator.permissions) {
-        try {
-          const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-          console.log('🎤 [PERMISSION] Current status:', permissionStatus.state);
-
-          if (permissionStatus.state === 'denied') {
-            setPermissionDenied(true);
-            setError('🚫 صلاحية الميكروفون محظورة - لتفعيلها:\n1️⃣ انقر على أيقونة القفل 🔒 بجانب عنوان الموقع\n2️⃣ اختر "السماح" أو "Allow" للميكروفون\n3️⃣ أعد تحميل الصفحة أو انقر "إعادة المحاولة"');
-            toast.error('يرجى السماح بصلاحية الميكروفون من إعدادات المتصفح ثم المحاولة مرة أخرى', {
-              duration: 10000,
-              icon: '🎤',
-            });
-            return;
-          }
-        } catch (permErr) {
-          console.log('⚠️ [PERMISSION] Could not query permission status:', permErr);
-        }
-      }
-
       await joinChannel();
     } catch (err: any) {
       console.error('Agora error:', err);
