@@ -126,6 +126,7 @@ export default function VoiceChatRoom({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRoomMembershipHistoryOpen, setIsRoomMembershipHistoryOpen] = useState(false);
   const [isBannedUsersOpen, setIsBannedUsersOpen] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   // Check if current user is muted by finding them in connectedUsers
   const currentUser = connectedUsers.find(u => u.userId === userId);
@@ -134,6 +135,7 @@ export default function VoiceChatRoom({
   const handleJoin = async () => {
     try {
       setError('');
+      setPermissionDenied(false);
       await joinChannel();
     } catch (err: any) {
       console.error('Agora error:', err);
@@ -142,9 +144,24 @@ export default function VoiceChatRoom({
       } else if (err.code === 'INVALID_PARAMS') {
         setError('App ID غير صحيح');
       } else if (err.code === 'DEVICE_NOT_FOUND' || err.message?.includes('device not found')) {
-        setError('🎤 لم يتم العثور على ميكروفون');
-      } else if (err.code === 'PERMISSION_DENIED' || err.message?.includes('Permission denied')) {
-        setError('🚫 تم رفض إذن الوصول للميكروفون');
+        setError('🎤 لم يتم العثور على ميكروفون - تأكد من توصيل ميكروفون بجهازك');
+      } else if (err.code === 'PERMISSION_DENIED' || err.message?.includes('Permission denied') || err.name === 'NotAllowedError') {
+        setPermissionDenied(true);
+
+        // إخراج المستخدم من الغرفة
+        if (isJoined) {
+          try {
+            await leaveChannel();
+          } catch (leaveErr) {
+            console.error('Failed to leave after permission denied:', leaveErr);
+          }
+        }
+
+        setError('🚫 تم رفض إذن الميكروفون - لتفعيل الصلاحية:\n1️⃣ انقر على أيقونة القفل 🔒 بجانب رابط الموقع\n2️⃣ اختر "السماح" للميكروفون\n3️⃣ انقر على زر "إعادة المحاولة" أسفله');
+        toast.error('يرجى تفعيل صلاحية الميكروفون من إعدادات المتصفح', {
+          duration: 8000,
+          icon: '🎤',
+        });
       } else {
         setError(`فشل الانضمام: ${err.message || 'خطأ غير معروف'}`);
       }
@@ -153,11 +170,11 @@ export default function VoiceChatRoom({
 
   // Auto-join voice chat when SignalR connects
   useEffect(() => {
-    if (isChatConnected && !isJoined && !isLoading) {
+    if (isChatConnected && !isJoined && !isLoading && !permissionDenied) {
       console.log('🎤 [AUTO-JOIN] SignalR connected, auto-joining voice chat...');
       handleJoin();
     }
-  }, [isChatConnected, isJoined, isLoading]);
+  }, [isChatConnected, isJoined, isLoading, permissionDenied]);
 
   const handleLeave = async () => {
     try {
@@ -250,8 +267,20 @@ export default function VoiceChatRoom({
         {/* Error Message */}
         {error && (
           <div className="mx-4 md:mx-6 mt-4">
-            <div className="bg-red-500/20 border border-red-500/50 text-red-100 px-4 py-3 rounded-xl text-center backdrop-blur-xl animate-shake max-w-3xl mx-auto">
-              {error}
+            <div className="bg-red-500/20 border border-red-500/50 text-red-100 px-4 py-3 rounded-xl backdrop-blur-xl animate-shake max-w-3xl mx-auto">
+              <div className="text-center whitespace-pre-line mb-3">
+                {error}
+              </div>
+              {permissionDenied && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={handleJoin}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 px-6 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105"
+                  >
+                    🔄 إعادة المحاولة
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
