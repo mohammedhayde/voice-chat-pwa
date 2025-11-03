@@ -150,7 +150,7 @@ export default function TermsOfService() {
                 إذا كان لديك أي أسئلة حول شروط الخدمة، يمكنك التواصل معنا عبر:
               </p>
               <p className="mt-2 leading-relaxed">
-                البريد الإلكتروني: support@example.com
+                البريد الإلكتروني: hamodeiraq390@gmail.com
               </p>
             </section>
 

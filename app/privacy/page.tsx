@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
                 نحن لا نبيع أو نؤجر معلوماتك الشخصية لأطراف ثالثة. قد نشارك المعلومات في الحالات التالية فقط:
               </p>
               <ul className="list-disc list-inside mr-6 mt-2 space-y-2">
-                <li>مع مزودي خدمات موثوقين لتشغيل التطبيق (مثل Agora و SignalR)</li>
+                <li>مع مزودي خدمات موثوقين لتشغيل التطبيق</li>
                 <li>عند الحاجة للامتثال للقوانين أو الأوامر القانونية</li>
                 <li>لحماية حقوق وسلامة المستخدمين والتطبيق</li>
               </ul>
@@ -118,7 +118,7 @@ export default function PrivacyPolicy() {
                 إذا كان لديك أي أسئلة حول سياسة الخصوصية، يمكنك التواصل معنا عبر:
               </p>
               <p className="mt-2 leading-relaxed">
-                البريد الإلكتروني: privacy@example.com
+                البريد الإلكتروني: hamodeiraq390@gmail.com
               </p>
             </section>
 
