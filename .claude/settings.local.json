@@ -20,7 +20,17 @@
       "Bash(node test-env.js:*)",
       "Bash(git commit:*)",
       "Bash(git config:*)",
-      "Bash(powershell.exe -Command \"cmdkey /list | Select-String -Pattern ''git|github''\")"
+      "Bash(powershell.exe -Command \"cmdkey /list | Select-String -Pattern ''git|github''\")",
+      "Bash(npm uninstall:*)",
+      "Bash(nul)",
+      "Bash(netstat:*)",
+      "Bash(powershell.exe -Command \"Get-NetTCPConnection -LocalPort 5209,7065 -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,State | Format-Table\")",
+      "Bash(dotnet build:*)",
+      "Bash(powershell.exe -Command \"cd ''''C:\\Users\\hamod\\source\\repos\\BackendChatRoomAPI''''; dotnet build\")",
+      "Bash(netlify:*)",
+      "Bash(npx netlify-cli:*)",
+      "Bash(node --version)",
+      "Bash(npm --version:*)"
     ],
     "deny": [],
     "ask": []

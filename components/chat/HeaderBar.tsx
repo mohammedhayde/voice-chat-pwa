@@ -3,9 +3,13 @@ interface HeaderBarProps {
   userName: string;
   isJoined: boolean;
   participantsCount: number;
+  canModerate?: boolean;
+  onSettingsClick?: () => void;
+  onMembershipHistoryClick?: () => void;
+  onBannedUsersClick?: () => void;
 }
 
-export default function HeaderBar({ channelName, userName, isJoined, participantsCount }: HeaderBarProps) {
+export default function HeaderBar({ channelName, userName, isJoined, participantsCount, canModerate, onSettingsClick, onMembershipHistoryClick, onBannedUsersClick }: HeaderBarProps) {
   const getRoomIcon = () => {
     const icons: { [key: string]: string } = {
       'room-1': '🌍', 'room-2': '👥', 'room-3': '🎮', 'room-4': '🎵', 'room-5': '📚',
@@ -57,6 +61,33 @@ export default function HeaderBar({ channelName, userName, isJoined, participant
               <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white">
                 <span className="font-semibold text-sm">👥 {participantsCount}</span>
               </div>
+            )}
+            {canModerate && onBannedUsersClick && (
+              <button
+                onClick={onBannedUsersClick}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-red-600/20 hover:bg-red-600/30 backdrop-blur-xl border border-red-500/30 text-red-200 transition-all hover:scale-105"
+                title="قائمة المحظورين"
+              >
+                🚫
+              </button>
+            )}
+            {canModerate && onMembershipHistoryClick && (
+              <button
+                onClick={onMembershipHistoryClick}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white transition-all hover:scale-105"
+                title="سجل الأعضاء"
+              >
+                👥
+              </button>
+            )}
+            {canModerate && onSettingsClick && (
+              <button
+                onClick={onSettingsClick}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white transition-all hover:scale-105"
+                title="إعدادات الغرفة"
+              >
+                ⚙️
+              </button>
             )}
           </div>
         </div>

@@ -2,13 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'export', // Enable static export for Netlify
+  // output: 'export' removed - Netlify supports full Next.js features including API routes
   turbopack: {}, // Empty turbopack config to silence warning
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true, // Required for static export
+    unoptimized: true, // Keep for optimization
   },
 };
 

@@ -9,15 +9,18 @@ export interface UseAgoraVoiceProps {
   appId: string;
   channel: string;
   token?: string;
+  uid?: number; // Add UID parameter
 }
 
-export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => {
+export const useAgoraVoice = ({ appId, channel, token, uid }: UseAgoraVoiceProps) => {
   const [client, setClient] = useState<IAgoraRTCClient | null>(null);
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false); // Voice activity for local user
+  const [speakingUsers, setSpeakingUsers] = useState<Set<number | string>>(new Set()); // Voice activity for remote users
   const clientRef = useRef<IAgoraRTCClient | null>(null);
 
   useEffect(() => {
@@ -73,6 +76,30 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
         agoraClient.on('user-left', (user) => {
           console.log('👋 [AGORA EVENT] User left:', user.uid);
           setRemoteUsers((prevUsers) => prevUsers.filter((u) => u.uid !== user.uid));
+          setSpeakingUsers((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(user.uid);
+            return newSet;
+          });
+        });
+
+        // Volume indicator for detecting speaking users
+        agoraClient.on('volume-indicator', (volumes) => {
+          volumes.forEach((volume) => {
+            const volumeLevel = volume.level;
+            const userId = volume.uid;
+
+            // Consider user speaking if volume is above threshold (e.g., 10)
+            if (volumeLevel > 10) {
+              setSpeakingUsers((prev) => new Set(prev).add(userId));
+            } else {
+              setSpeakingUsers((prev) => {
+                const newSet = new Set(prev);
+                newSet.delete(userId);
+                return newSet;
+              });
+            }
+          });
         });
 
         agoraClient.on('connection-state-change', (curState, prevState) => {
@@ -151,7 +178,8 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
 
       // Join the channel
       console.log('🔗 [VOICE] Joining Agora channel with token...');
-      await client.join(appId, channel, agoraToken, null);
+      console.log('🔗 [VOICE] Using UID:', uid || 'null (auto-assign)');
+      await client.join(appId, channel, agoraToken, uid || null);
       console.log('✅ [VOICE] Successfully joined Agora channel!');
 
       // Dynamically import Agora SDK for audio track creation
@@ -167,6 +195,21 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
       console.log('📡 [VOICE] Publishing audio track...');
       await client.publish([audioTrack]);
       console.log('✅ [VOICE] Audio track published successfully!');
+
+      // Enable volume indicator
+      console.log('🔊 [VOICE] Enabling volume indicator...');
+      client.enableAudioVolumeIndicator();
+
+      // Setup local volume monitoring
+      const volumeInterval = setInterval(() => {
+        if (audioTrack) {
+          const volumeLevel = audioTrack.getVolumeLevel();
+          setIsSpeaking(volumeLevel > 0.1); // 10% threshold
+        }
+      }, 200); // Check every 200ms
+
+      // Store interval ID to clear later
+      (audioTrack as any)._volumeInterval = volumeInterval;
 
       setIsJoined(true);
       console.log('🎉 [VOICE] Voice chat joined successfully!');
@@ -191,6 +234,12 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
       setIsLoading(true);
 
       if (localAudioTrack) {
+        // Clear volume monitoring interval
+        const volumeInterval = (localAudioTrack as any)._volumeInterval;
+        if (volumeInterval) {
+          clearInterval(volumeInterval);
+        }
+
         localAudioTrack.close();
         setLocalAudioTrack(null);
       }
@@ -198,6 +247,8 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
       await client.leave();
       setIsJoined(false);
       setRemoteUsers([]);
+      setSpeakingUsers(new Set());
+      setIsSpeaking(false);
     } catch (error) {
       console.error('Failed to leave channel:', error);
       throw error;
@@ -225,6 +276,8 @@ export const useAgoraVoice = ({ appId, channel, token }: UseAgoraVoiceProps) => 
     isJoined,
     isMuted,
     isLoading,
+    isSpeaking,
+    speakingUsers,
     joinChannel,
     leaveChannel,
     toggleMute,

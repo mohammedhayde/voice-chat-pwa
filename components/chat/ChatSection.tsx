@@ -1,11 +1,12 @@
 import { useRef, useEffect } from 'react';
-import { ChatMessage, ConnectedUser } from '@/hooks/usePusherChat';
+import { ChatMessage, ConnectedUser } from '@/hooks/useSignalR';
 
 interface ChatSectionProps {
   messages: ChatMessage[];
   connectedUsers: ConnectedUser[];
   isChatConnected: boolean;
   messageText: string;
+  canSendMessages?: boolean;
   onMessageChange: (text: string) => void;
   onSendMessage: (e: React.FormEvent) => void;
 }
@@ -15,6 +16,7 @@ export default function ChatSection({
   connectedUsers,
   isChatConnected,
   messageText,
+  canSendMessages = true,
   onMessageChange,
   onSendMessage
 }: ChatSectionProps) {
@@ -69,11 +71,11 @@ export default function ChatSection({
                   }`}
                 >
                   <p className={`text-xs font-bold mb-1 ${message.isLocal ? 'text-blue-200' : 'text-purple-300'}`}>
-                    {message.isLocal ? 'أنت' : message.userName}
+                    {message.isLocal ? 'أنت' : message.username}
                   </p>
-                  <p className="text-sm break-words leading-relaxed">{message.text}</p>
+                  <p className="text-sm break-words leading-relaxed">{message.content}</p>
                   <p className={`text-xs mt-1 ${message.isLocal ? 'text-blue-200/70' : 'text-white/50'}`}>
-                    {new Date(message.timestamp).toLocaleTimeString('ar-SA', {
+                    {new Date(message.sentAt).toLocaleTimeString('ar-SA', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
@@ -93,18 +95,24 @@ export default function ChatSection({
             ⏳ جاري الاتصال بخادم الدردشة...
           </p>
         )}
+        {!canSendMessages && isChatConnected && (
+          <p className="text-xs text-center text-red-200 mb-2 sm:mb-3 animate-pulse flex items-center justify-center gap-2">
+            <span>🔇</span>
+            <span>تم كتمك من قبل المشرف - لا يمكنك إرسال رسائل</span>
+          </p>
+        )}
         <form onSubmit={onSendMessage} className="flex gap-2 sm:gap-3">
           <input
             type="text"
             value={messageText}
             onChange={(e) => onMessageChange(e.target.value)}
-            placeholder="اكتب رسالة..."
-            disabled={!isChatConnected}
+            placeholder={canSendMessages ? "اكتب رسالة..." : "تم كتمك"}
+            disabled={!isChatConnected || !canSendMessages}
             className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl text-white text-sm sm:text-base placeholder-white/40 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30 transition-all outline-none disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!isChatConnected || !messageText.trim()}
+            disabled={!isChatConnected || !messageText.trim() || !canSendMessages}
             className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <span className="text-lg sm:text-xl">📤</span>

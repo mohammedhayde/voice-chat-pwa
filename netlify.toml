@@ -3,7 +3,7 @@
 
 [build]
   command = "npm run build"
-  publish = "out"
+  publish = ".next"
   functions = "netlify/functions"
 
 [build.environment]

@@ -2,6 +2,7 @@ interface VoiceControlsProps {
   isJoined: boolean;
   isMuted: boolean;
   isLoading: boolean;
+  isSpeaking?: boolean;
   onJoin: () => void;
   onToggleMute: () => void;
   onLeave: () => void;
@@ -11,6 +12,7 @@ export default function VoiceControls({
   isJoined,
   isMuted,
   isLoading,
+  isSpeaking = false,
   onJoin,
   onToggleMute,
   onLeave
@@ -20,12 +22,19 @@ export default function VoiceControls({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4">
         {/* Left: Mic Status */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br ${
+          <div className={`relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br ${
             isMuted ? 'from-gray-600 to-gray-800' : 'from-blue-500 to-purple-600'
           } flex items-center justify-center text-2xl sm:text-3xl shadow-lg transform transition-all ${
-            !isMuted && isJoined ? 'animate-pulse' : ''
+            !isMuted && isJoined && isSpeaking ? 'scale-110' : ''
           }`}>
             {isMuted ? '🔇' : '🎤'}
+            {/* Speaking indicator rings */}
+            {!isMuted && isJoined && isSpeaking && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-green-400 opacity-30 animate-ping"></div>
+                <div className="absolute inset-0 rounded-full bg-green-400 opacity-20 animate-pulse"></div>
+              </>
+            )}
           </div>
           <div className="flex-1">
             <div className={`inline-flex items-center gap-2 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold mb-1 ${

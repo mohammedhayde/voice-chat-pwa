@@ -1,55 +1,131 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { useAgoraVoice } from '@/hooks/useAgoraVoice';
-import { usePusherChat } from '@/hooks/usePusherChat';
+import { useSignalR } from '@/hooks/useSignalR';
+import { joinChatRoom, leaveChatRoom, RoomPermissions } from '@/lib/chatRoomsService';
 import HeaderBar from './chat/HeaderBar';
 import VoiceControls from './chat/VoiceControls';
 import ChatSection from './chat/ChatSection';
 import ParticipantsSidebar from './chat/ParticipantsSidebar';
+import RoomSettingsModal from './modals/RoomSettingsModal';
+import RoomMembershipHistoryModal from './modals/RoomMembershipHistoryModal';
+import BannedUsersModal from './modals/BannedUsersModal';
 
 interface VoiceChatRoomProps {
   agoraAppId: string;
   agoraToken?: string;
-  pusherAppKey: string;
-  pusherCluster: string;
+  agoraUid?: number;
   channelName: string;
   userName: string;
+  userId?: number;
+  roomId?: number;
+  permissions?: RoomPermissions;
 }
 
 export default function VoiceChatRoom({
   agoraAppId,
   agoraToken,
-  pusherAppKey,
-  pusherCluster,
+  agoraUid,
   channelName,
-  userName
+  userName,
+  userId,
+  roomId,
+  permissions
 }: VoiceChatRoomProps) {
+  const router = useRouter();
+  const leaveChannelRef = useRef<(() => Promise<void>) | null>(null);
+  const isJoinedRef = useRef<boolean>(false);
+
   const {
     remoteUsers,
     isJoined,
     isMuted,
     isLoading,
+    isSpeaking,
+    speakingUsers,
     joinChannel,
     leaveChannel,
     toggleMute,
-  } = useAgoraVoice({ appId: agoraAppId, channel: channelName, token: agoraToken });
+  } = useAgoraVoice({ appId: agoraAppId, channel: channelName, token: agoraToken, uid: agoraUid });
 
+  // Update refs when values change
+  useEffect(() => {
+    leaveChannelRef.current = leaveChannel;
+    isJoinedRef.current = isJoined;
+  }, [leaveChannel, isJoined]);
+
+  // Replace Pusher with SignalR
   const {
     messages,
     isConnected: isChatConnected,
     connectedUsers,
-    sendMessage,
-  } = usePusherChat({
-    appKey: pusherAppKey,
-    cluster: pusherCluster,
-    channelName,
-    userName
+    sendMessage: sendSignalRMessage,
+  } = useSignalR({
+    roomId: roomId || 0,
+    userId: userId || 0,
+    userName,
+    onBanned: async (reason) => {
+      console.log('🚫 [BAN] onBanned callback triggered:', reason);
+      toast.error(`🚫 تم حظرك من الغرفة - السبب: ${reason}`, { duration: 5000 });
+
+      // Leave voice channel before redirecting
+      if (isJoinedRef.current && leaveChannelRef.current) {
+        try {
+          await leaveChannelRef.current();
+          console.log('✅ Left voice channel after ban');
+        } catch (err) {
+          console.error('❌ Failed to leave voice channel:', err);
+        }
+      }
+
+      // Force redirect after delay
+      console.log('🔄 Redirecting to home page in 2 seconds...');
+      setTimeout(() => {
+        console.log('🏠 Executing redirect now...');
+        window.location.href = '/';
+      }, 2000);
+    },
+    onKicked: async (reason) => {
+      console.log('👋 [KICK] onKicked callback triggered:', reason);
+      toast.error(`👋 تم طردك من الغرفة - السبب: ${reason}`, { duration: 5000 });
+
+      // Leave voice channel before redirecting
+      if (isJoinedRef.current && leaveChannelRef.current) {
+        try {
+          await leaveChannelRef.current();
+          console.log('✅ Left voice channel after kick');
+        } catch (err) {
+          console.error('❌ Failed to leave voice channel:', err);
+        }
+      }
+
+      // Force redirect after delay
+      console.log('🔄 Redirecting to home page in 2 seconds...');
+      setTimeout(() => {
+        console.log('🏠 Executing redirect now...');
+        window.location.href = '/';
+      }, 2000);
+    },
+    onMuted: (reason, expiresAt) => {
+      const until = expiresAt ? new Date(expiresAt).toLocaleString('ar-SA') : 'دائماً';
+      toast.error(`🔇 تم كتمك من الغرفة - السبب: ${reason} - حتى: ${until}`, { duration: 5000 });
+      setError(`🔇 تم كتمك من الغرفة - السبب: ${reason} - حتى: ${until}`);
+    }
   });
 
   const [error, setError] = useState<string>('');
   const [messageText, setMessageText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRoomMembershipHistoryOpen, setIsRoomMembershipHistoryOpen] = useState(false);
+  const [isBannedUsersOpen, setIsBannedUsersOpen] = useState(false);
+
+  // Check if current user is muted by finding them in connectedUsers
+  const currentUser = connectedUsers.find(u => u.userId === userId);
+  const isUserMuted = currentUser?.isMuted || false;
 
   const handleJoin = async () => {
     try {
@@ -71,10 +147,25 @@ export default function VoiceChatRoom({
     }
   };
 
+  // Auto-join voice chat when SignalR connects
+  useEffect(() => {
+    if (isChatConnected && !isJoined && !isLoading) {
+      console.log('🎤 [AUTO-JOIN] SignalR connected, auto-joining voice chat...');
+      handleJoin();
+    }
+  }, [isChatConnected, isJoined, isLoading]);
+
   const handleLeave = async () => {
     try {
       setError('');
       await leaveChannel();
+
+      // If roomId is provided, notify API about leaving
+      if (roomId) {
+        console.log('📤 [API] Notifying server about leaving room...');
+        await leaveChatRoom(roomId);
+        console.log('✅ [API] Successfully left room');
+      }
     } catch (err) {
       setError('فشل مغادرة الغرفة');
       console.error(err);
@@ -96,10 +187,11 @@ export default function VoiceChatRoom({
     if (!messageText.trim()) return;
 
     try {
-      await sendMessage(messageText);
+      await sendSignalRMessage(messageText);
       setMessageText('');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send message:', err);
+      setError(err.message || 'فشل في إرسال الرسالة');
     }
   };
 
@@ -119,6 +211,10 @@ export default function VoiceChatRoom({
           userName={userName}
           isJoined={isJoined}
           participantsCount={remoteUsers.length + 1}
+          canModerate={permissions?.canModerate}
+          onSettingsClick={() => setIsSettingsOpen(true)}
+          onMembershipHistoryClick={() => setIsRoomMembershipHistoryOpen(true)}
+          onBannedUsersClick={() => setIsBannedUsersOpen(true)}
         />
 
         {/* Error Message */}
@@ -152,6 +248,7 @@ export default function VoiceChatRoom({
               isJoined={isJoined}
               isMuted={isMuted}
               isLoading={isLoading}
+              isSpeaking={isSpeaking}
               onJoin={handleJoin}
               onToggleMute={handleToggleMute}
               onLeave={handleLeave}
@@ -163,6 +260,7 @@ export default function VoiceChatRoom({
               connectedUsers={connectedUsers}
               isChatConnected={isChatConnected}
               messageText={messageText}
+              canSendMessages={!isUserMuted && (permissions?.canSendMessages !== false)}
               onMessageChange={setMessageText}
               onSendMessage={handleSendMessage}
             />
@@ -188,14 +286,49 @@ export default function VoiceChatRoom({
             <ParticipantsSidebar
               userName={userName}
               isMuted={isMuted}
+              isSpeaking={isSpeaking}
+              speakingUsers={speakingUsers}
               isVoiceJoined={isJoined}
               remoteUsers={remoteUsers}
               connectedUsers={connectedUsers}
+              roomId={roomId}
+              permissions={permissions}
               onClose={() => setIsSidebarOpen(false)}
             />
           </div>
         </div>
       </div>
+
+      {/* Room Settings Modal */}
+      {roomId && (
+        <RoomSettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          roomId={roomId}
+          isOwner={permissions?.isOwner || false}
+          canModerate={permissions?.canModerate || false}
+        />
+      )}
+
+      {/* Room Membership History Modal */}
+      {roomId && (
+        <RoomMembershipHistoryModal
+          isOpen={isRoomMembershipHistoryOpen}
+          onClose={() => setIsRoomMembershipHistoryOpen(false)}
+          roomId={roomId}
+          canModerate={permissions?.canModerate}
+        />
+      )}
+
+      {/* Banned Users Modal */}
+      {roomId && (
+        <BannedUsersModal
+          isOpen={isBannedUsersOpen}
+          onClose={() => setIsBannedUsersOpen(false)}
+          roomId={roomId}
+          canModerate={permissions?.canModerate}
+        />
+      )}
 
       <style jsx>{`
         @keyframes blob {
