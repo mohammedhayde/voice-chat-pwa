@@ -15,6 +15,7 @@
 ### 🔐 المصادقة والأمان
 - ✅ تسجيل حساب جديد
 - ✅ تسجيل دخول مع JWT
+- ✅ تسجيل دخول بـ Google (OAuth 2.0)
 - ✅ دخول كضيف (Guest)
 - ✅ تغيير كلمة المرور
 - ✅ Auto-refresh للـ Access Token
@@ -102,8 +103,9 @@ http://localhost:3000
 
 الملفات التالية تحتوي على توثيق مفصل:
 
-- **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - ملخص شامل للمشروع
+- **[NETLIFY_ENV_SETUP.md](./NETLIFY_ENV_SETUP.md)** - ⭐ إعداد Environment Variables في Netlify
 - **[LOCAL_DEV_SETUP.md](./LOCAL_DEV_SETUP.md)** - ⭐ دليل إعداد التطوير المحلي
+- **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - ملخص شامل للمشروع
 - **[AUTH_INTEGRATION.md](./AUTH_INTEGRATION.md)** - دليل نظام المصادقة
 - **[CHATROOMS_API_INTEGRATION.md](./CHATROOMS_API_INTEGRATION.md)** - دليل تكامل Chat Rooms API
 - **[AGORA_TOKEN_ARCHITECTURE.md](./AGORA_TOKEN_ARCHITECTURE.md)** - معمارية توليد Agora Tokens
@@ -159,13 +161,18 @@ voice-chat-pwa/
 - **TypeScript** - Type Safety
 - **Tailwind CSS** - Styling
 
+### Authentication
+- **NextAuth.js** - OAuth & Session Management
+- **Google OAuth 2.0** - Social Login
+- **JWT** - Token-based Authentication
+
 ### Real-time Communication
 - **Agora RTC SDK** - Voice/Video calls
 - **Pusher** - Text chat & presence
 
 ### Backend Integration
 - **Chat Room API** - External API
-- **JWT** - Authentication
+- **RESTful API** - Backend communication
 
 ---
 
@@ -204,10 +211,12 @@ voice-chat-pwa/
 ```
 POST /api/auth/register           - تسجيل حساب جديد
 POST /api/auth/login              - تسجيل دخول
+POST /api/auth/google-login       - تسجيل دخول بـ Google
 POST /api/auth/guest-login        - دخول كضيف
 POST /api/auth/refresh-token      - تحديث Token
 POST /api/auth/logout             - تسجيل خروج
 POST /api/auth/change-password    - تغيير كلمة المرور
+GET  /api/auth/me                 - معلومات المستخدم الحالي
 ```
 
 ### Chat Rooms API
@@ -220,6 +229,54 @@ DELETE /api/chatrooms/{id}/members/{userId}  - إزالة عضو
 POST /api/chatrooms/{id}/ban      - حظر مستخدم
 POST /api/chatrooms/{id}/mute     - كتم مستخدم
 ```
+
+---
+
+## 🚀 النشر (Deployment)
+
+### Netlify Deployment
+
+1. **ربط المشروع بـ Netlify:**
+   - افتح [Netlify Dashboard](https://app.netlify.com)
+   - اختر "Add new site" → "Import an existing project"
+   - اربط GitHub repository
+
+2. **إعداد Build Settings:**
+   ```
+   Build command: npm run build
+   Publish directory: .next
+   ```
+
+3. **إعداد Environment Variables:**
+
+   **📋 اتبع التعليمات في:** [NETLIFY_ENV_SETUP.md](./NETLIFY_ENV_SETUP.md)
+
+   المتغيرات المطلوبة:
+   - `NEXTAUTH_URL` - رابط الموقع
+   - `NEXTAUTH_SECRET` - مفتاح التشفير
+   - `GOOGLE_CLIENT_ID` - Google OAuth
+   - `GOOGLE_CLIENT_SECRET` - Google OAuth
+   - `NEXT_PUBLIC_API_URL` - Backend API
+   - `NEXT_PUBLIC_AGORA_APP_ID` - Agora voice
+   - `AGORA_PRIMARY_CERTIFICATE` - Agora token generation
+   - `NEXT_PUBLIC_PUSHER_KEY` - Pusher chat
+   - `NEXT_PUBLIC_PUSHER_CLUSTER` - Pusher region
+   - `PUSHER_APP_ID` - Pusher functions
+   - `PUSHER_SECRET` - Pusher functions
+
+4. **إعداد Google OAuth:**
+   - في [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - أضف redirect URI: `https://your-domain.com/api/auth/callback/google`
+
+5. **Deploy:**
+   - Netlify سينشر تلقائياً عند push إلى GitHub
+   - أو اضغط "Trigger deploy" يدوياً
+
+### Domain Setup
+
+- في Netlify → Domain settings
+- أضف custom domain أو استخدم netlify subdomain
+- تأكد من تحديث `NEXTAUTH_URL` بالـ domain الجديد
 
 ---
 

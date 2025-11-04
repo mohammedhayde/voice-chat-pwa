@@ -1,175 +1,115 @@
-# لماذا يعمل محلياً ولا يعمل على Netlify؟ 🤔
+# Netlify Environment Variables Setup
 
-## 📊 المقارنة:
+## 📋 Required Environment Variables
 
-| البيئة | الحالة | السبب |
-|--------|--------|-------|
-| **السيرفر المحلي** | ✅ يعمل | يقرأ `.env.local` من جهازك |
-| **Netlify** | ❌ لا يعمل | `.env.local` **غير موجود** (في `.gitignore`) |
+Add these environment variables to your Netlify Dashboard.
 
----
+**Location:** Netlify Dashboard → Site settings → Environment variables
 
-## 🔍 السبب التفصيلي:
-
-### على جهازك (السيرفر المحلي):
-```
-1. Next.js يقرأ .env.local ✅
-2. process.env.PUSHER_APP_ID = "2070639" ✅
-3. process.env.PUSHER_SECRET = "612a6b234fd2f8b32a22" ✅
-4. Netlify Function تعمل ✅
-5. الدردشة تعمل ✅
-```
-
-### على Netlify:
-```
-1. .env.local غير موجود (gitignored) ❌
-2. process.env.PUSHER_APP_ID = undefined ❌
-3. process.env.PUSHER_SECRET = undefined ❌
-4. Netlify Function تفشل → خطأ 500 ❌
-5. الدردشة لا تعمل ❌
-```
+> **⚠️ Important:** Replace placeholder values with your actual credentials.
+>
+> **Actual values are stored in:**
+> - `.env.local` (for local development - not in git)
+> - Netlify Dashboard (for production)
+> - Google Cloud Console (for OAuth credentials)
+> - Service provider dashboards (Agora, Pusher)
 
 ---
 
-## 🎯 الحل: إضافة Environment Variables في Netlify Dashboard
+## 🔐 NextAuth Configuration
 
-### **الخطوة 1: افتح Netlify Dashboard**
-
-1. اذهب إلى: https://app.netlify.com
-2. اختر موقعك: **admirable-melba-d159b2**
-3. اضغط **"Site settings"** (تبويب في الأعلى)
-4. من القائمة الجانبية، اختر **"Environment variables"**
-
----
-
-### **الخطوة 2: أضف المتغيرات واحداً تلو الآخر**
-
-اضغط **"Add a variable"** وأضف كل متغير:
-
-#### المتغير 1:
-- **Key:** `PUSHER_APP_ID`
-- **Value:** `2070639`
-- اضغط **"Create variable"**
-
-#### المتغير 2:
-- **Key:** `PUSHER_SECRET`
-- **Value:** `612a6b234fd2f8b32a22`
-- اضغط **"Create variable"**
-
-#### المتغير 3:
-- **Key:** `NEXT_PUBLIC_PUSHER_KEY`
-- **Value:** `5b2029a10320bc0f6e04`
-- اضغط **"Create variable"**
-
-#### المتغير 4:
-- **Key:** `NEXT_PUBLIC_PUSHER_CLUSTER`
-- **Value:** `eu`
-- اضغط **"Create variable"**
-
-#### المتغير 5:
-- **Key:** `NEXT_PUBLIC_AGORA_APP_ID`
-- **Value:** `ed407a71c9054d6197037f62849d2d87`
-- اضغط **"Create variable"**
-
----
-
-### **الخطوة 3: تحقق من الإضافة**
-
-بعد الإضافة، يجب أن ترى القائمة:
+```env
+NEXTAUTH_URL=https://your-domain.com
+NEXTAUTH_SECRET=your-secret-key-min-32-characters
 ```
-✅ PUSHER_APP_ID = 2070639
-✅ PUSHER_SECRET = ••••••••••••••••••••••• (مخفي)
-✅ NEXT_PUBLIC_PUSHER_KEY = 5b2029a10320bc0f6e04
-✅ NEXT_PUBLIC_PUSHER_CLUSTER = eu
-✅ NEXT_PUBLIC_AGORA_APP_ID = ed407a71c9054d6197037f62849d2d87
+
+**How to generate NEXTAUTH_SECRET:**
+```bash
+openssl rand -base64 32
 ```
 
 ---
 
-### **الخطوة 4: أعد النشر (Redeploy)**
+## 🔑 Google OAuth Credentials
 
-⚠️ **مهم جداً:** يجب إعادة النشر لتطبيق المتغيرات الجديدة!
-
-1. اذهب إلى تبويب **"Deploys"**
-2. اضغط **"Trigger deploy"** (زر في الأعلى يمين)
-3. اختر **"Deploy site"**
-4. انتظر 2-3 دقائق حتى يكتمل النشر
-5. انتظر حتى ترى: ✅ **"Published"**
-
----
-
-### **الخطوة 5: تفعيل Client Events في Pusher** 🔓
-
-⚠️ **بدون هذا، الرسائل لن تُرسل بين المستخدمين!**
-
-1. افتح: https://dashboard.pusher.com
-2. سجل دخول
-3. اختر التطبيق: **app_id = 2070639**
-4. اضغط **"App Settings"** (من القائمة الجانبية)
-5. ابحث عن: **"Enable client events"**
-6. ✅ **فعّله** (ضع علامة ✓)
-7. اضغط **"Update"** أو **"Save"**
-
----
-
-## 🧪 اختبر بعد التطبيق:
-
-### 1. اختبر Netlify Function مباشرة:
-
-افتح في المتصفح:
-```
-https://69035792ec8442481c3cbe44--admirable-melba-d159b2.netlify.app/.netlify/functions/pusher-auth
+```env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-client-secret
 ```
 
-**النتيجة المتوقعة:**
-```json
-{"error":"Method not allowed"}
+**Get credentials from:**
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create OAuth 2.0 Client ID
+3. Add authorized redirect URI: `https://your-domain.com/api/auth/callback/google`
+
+---
+
+## 🌐 Backend API
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend-api.com/api
 ```
 
-**إذا رأيت 500:** المتغيرات لم تُطبق بعد، انتظر أو أعد النشر.
-
 ---
 
-### 2. اختبر التطبيق:
+## 🎙️ Agora (Voice Chat)
 
-افتح في المتصفح:
-```
-https://69035792ec8442481c3cbe44--admirable-melba-d159b2.netlify.app
+```env
+NEXT_PUBLIC_AGORA_APP_ID=your_agora_app_id
+AGORA_PRIMARY_CERTIFICATE=your_agora_certificate
 ```
 
-افتح **Developer Console** (F12) وتحقق:
-- ✅ لا يوجد خطأ `/api/pusher/auth 500`
-- ✅ `Pusher connected`
-- ✅ `Message sent` (عند إرسال رسالة)
+**Get credentials from:**
+- [Agora Console](https://console.agora.io)
 
 ---
 
-## 📋 Checklist النهائي:
+## 💬 Pusher (Text Chat)
 
-قبل الاختبار النهائي، تأكد:
+```env
+NEXT_PUBLIC_PUSHER_KEY=your_pusher_key
+NEXT_PUBLIC_PUSHER_CLUSTER=eu
+PUSHER_APP_ID=your_pusher_app_id
+PUSHER_SECRET=your_pusher_secret
+```
 
-- [ ] **1. أضفت جميع المتغيرات (5 متغيرات) في Netlify**
-- [ ] **2. أعدت النشر (Redeploy) وانتظرت اكتماله**
-- [ ] **3. فعّلت Client Events في Pusher Dashboard**
-- [ ] **4. اختبرت Netlify Function (يجب أن يرد "Method not allowed")**
-- [ ] **5. فتحت التطبيق وتحققت من Console (لا أخطاء)**
-
----
-
-## 🎉 بعد إكمال كل الخطوات:
-
-✅ السيرفر المحلي: **يعمل**
-✅ Netlify: **يعمل**
-✅ الدردشة الصوتية: **تعمل**
-✅ الدردشة الكتابية: **تعمل**
-✅ قائمة المتصلين: **تعمل**
+**Get credentials from:**
+- [Pusher Dashboard](https://dashboard.pusher.com)
 
 ---
 
-## 💡 نصيحة:
+## ✅ Checklist
 
-في المستقبل، كلما أضفت متغيرات جديدة في `.env.local`، يجب إضافتها يدوياً في Netlify Dashboard أيضاً.
+- [ ] All environment variables added to Netlify
+- [ ] Google OAuth redirect URI configured: `https://your-domain.com/api/auth/callback/google`
+- [ ] Site redeployed after adding variables
+- [ ] Test Google login at: `https://your-domain.com/login`
 
 ---
 
-**ابدأ من الخطوة 1 الآن!** 🚀
+## 🔧 How to Add Variables in Netlify
+
+1. Go to: https://app.netlify.com/sites/YOUR_SITE_NAME/settings/deploys#environment
+2. Click **"Add a variable"** or **"Edit variables"**
+3. Add each variable name and value
+4. Click **"Save"**
+5. Trigger a new deploy
+
+---
+
+## 🚨 Security Notes
+
+- Never commit these values to Git
+- Keep `.env.local` in `.gitignore`
+- Only share credentials through secure channels
+- Rotate secrets regularly
+
+---
+
+## 📞 Support
+
+If you have issues:
+1. Check all variables are spelled correctly (case-sensitive)
+2. Verify no extra spaces in values
+3. Ensure site is redeployed after changes
+4. Check browser console for errors
