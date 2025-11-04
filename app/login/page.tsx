@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { login, guestLogin } from '@/lib/authService';
 import { useAuth } from '@/contexts/AuthContext';
-import GoogleLoginButton from '@/components/GoogleLoginButton';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -139,7 +139,7 @@ export default function LoginPage() {
 
         {/* Google Login Button */}
         <div className="mb-4">
-          <GoogleLoginButton />
+          <GoogleSignInButton />
         </div>
 
         {/* Guest Login Button */}
