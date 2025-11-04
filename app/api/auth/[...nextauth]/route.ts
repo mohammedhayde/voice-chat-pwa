@@ -39,8 +39,10 @@ const authOptions: NextAuthOptions = {
 
           // Store JWT token and user data in user object (will be passed to jwt callback)
           (user as any).backendToken = data.token;
+          (user as any).refreshToken = data.refreshToken;
           (user as any).userId = data.user?.id || data.userId;
           (user as any).userPicture = data.user?.picture || user.image;
+          (user as any).userRole = data.user?.role || 'User';
 
           return true;
         } else {
@@ -59,8 +61,10 @@ const authOptions: NextAuthOptions = {
       if (user) {
         console.log('🔐 [NextAuth] jwt callback - initial sign in');
         token.backendToken = (user as any).backendToken;
+        token.refreshToken = (user as any).refreshToken;
         token.userId = (user as any).userId;
         token.userPicture = (user as any).userPicture;
+        token.userRole = (user as any).userRole;
       }
 
       return token;
@@ -70,8 +74,10 @@ const authOptions: NextAuthOptions = {
       // Add backend JWT to session
       console.log('🔐 [NextAuth] session callback');
       (session as any).backendToken = token.backendToken;
+      (session as any).refreshToken = token.refreshToken;
       (session as any).userId = token.userId;
       (session as any).userPicture = token.userPicture;
+      (session as any).userRole = token.userRole;
 
       return session;
     },
