@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { register, validatePassword } from '@/lib/authService';
 import { useAuth } from '@/contexts/AuthContext';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -205,6 +206,16 @@ export default function RegisterPage() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="my-6 flex items-center gap-4">
+          <div className="flex-1 h-px bg-gray-300"></div>
+          <span className="text-gray-500 text-sm font-medium">أو</span>
+          <div className="flex-1 h-px bg-gray-300"></div>
+        </div>
+
+        {/* Google Sign In Button */}
+        <GoogleSignInButton />
 
         {/* Login Link */}
         <div className="mt-6 text-center">
