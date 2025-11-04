@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
 import { logout as logoutService, getCurrentUser, isLoggedIn } from '@/lib/authService';
 
 interface User {
@@ -25,54 +24,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   const refreshUser = () => {
-    // Check NextAuth session first
-    if (session?.user) {
-      const nextAuthUser: User = {
-        userId: session.user.userId?.toString() || session.user.id || '',
-        username: session.user.username || session.user.name || 'Google User',
-        isGuest: false,
-      };
-
-      // Store tokens in localStorage for API calls
-      if (session.user.backendToken) {
-        localStorage.setItem('accessToken', session.user.backendToken);
-      }
-      if (session.user.refreshToken) {
-        localStorage.setItem('refreshToken', session.user.refreshToken);
-      }
-
-      setUser(nextAuthUser);
-      return;
-    }
-
-    // Fallback to traditional auth
     const currentUser = getCurrentUser();
     setUser(currentUser);
   };
 
   useEffect(() => {
-    // Update user when session changes
-    if (status !== 'loading') {
-      refreshUser();
-      setLoading(false);
-    }
-  }, [session, status]);
-
-  useEffect(() => {
-    // Check if user is logged in on mount (traditional auth)
-    if (!session && isLoggedIn()) {
+    // Check if user is logged in on mount
+    if (isLoggedIn()) {
       refreshUser();
     }
-    if (status !== 'loading') {
-      setLoading(false);
-    }
+    setLoading(false);
 
     // Auto-refresh token every 10 minutes (before the 15-minute expiry)
     const refreshInterval = setInterval(async () => {
-      if (isLoggedIn() && !session) {
+      if (isLoggedIn()) {
         try {
           const { refreshAccessToken } = await import('@/lib/authService');
           await refreshAccessToken();
@@ -84,16 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 10 * 60 * 1000); // 10 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [session, status]);
+  }, []);
 
   const logout = async () => {
     try {
-      // Sign out from NextAuth if session exists
-      if (session) {
-        await signOut({ redirect: false });
-      }
-
-      // Traditional logout
       await logoutService();
       setUser(null);
       router.push('/login');
