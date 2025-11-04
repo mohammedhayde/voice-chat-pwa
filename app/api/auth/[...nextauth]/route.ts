@@ -1,13 +1,22 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+// Debug environment variables
+console.log("🔑 [NEXTAUTH CONFIG] Environment check:");
+console.log("- NEXTAUTH_SECRET:", process.env.NEXTAUTH_SECRET ? "✅ Present" : "❌ Missing");
+console.log("- NEXTAUTH_URL:", process.env.NEXTAUTH_URL || "❌ Missing");
+console.log("- GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "✅ Present" : "❌ Missing");
+console.log("- GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ Present" : "❌ Missing");
+
 const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
+  debug: true,
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
@@ -15,9 +24,12 @@ const authOptions: NextAuthOptions = {
           console.log("🔐 [GOOGLE AUTH] Signing in with Google...");
 
           // Send user data to backend API
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL?.replace('/auth', '')}/api/auth/external-login`,
-            {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-chatroom-api.fly.dev/api';
+          const backendUrl = apiUrl.replace('/auth', '').replace('/api', '') + '/api/auth/external-login';
+
+          console.log("📤 [GOOGLE AUTH] Backend URL:", backendUrl);
+
+          const response = await fetch(backendUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
