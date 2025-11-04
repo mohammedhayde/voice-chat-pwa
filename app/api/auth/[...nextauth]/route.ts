@@ -17,17 +17,17 @@ const authOptions: NextAuthOptions = {
 
       try {
         // Send user data to Backend to get JWT token
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://backend-chatroom-api.fly.dev/api/auth';
-        const response = await fetch(`${backendUrl}/external-login`, {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/auth', '') || 'https://backend-chatroom-api.fly.dev';
+        const response = await fetch(`${backendUrl}/api/auth/google-login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            provider: 'Google',
-            providerKey: user.id,
             email: user.email,
-            username: user.name || user.email?.split('@')[0],
+            name: user.name || user.email?.split('@')[0],
+            googleId: user.id,
+            picture: user.image || '',
           }),
         });
 
@@ -35,12 +35,12 @@ const authOptions: NextAuthOptions = {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ [NextAuth] Backend returned JWT');
+          console.log('✅ [NextAuth] Backend returned:', data);
 
-          // Store JWT token in user object (will be passed to jwt callback)
+          // Store JWT token and user data in user object (will be passed to jwt callback)
           (user as any).backendToken = data.token;
-          (user as any).refreshToken = data.refreshToken;
-          (user as any).userId = data.userId;
+          (user as any).userId = data.user?.id || data.userId;
+          (user as any).userPicture = data.user?.picture || user.image;
 
           return true;
         } else {
@@ -59,8 +59,8 @@ const authOptions: NextAuthOptions = {
       if (user) {
         console.log('🔐 [NextAuth] jwt callback - initial sign in');
         token.backendToken = (user as any).backendToken;
-        token.refreshToken = (user as any).refreshToken;
         token.userId = (user as any).userId;
+        token.userPicture = (user as any).userPicture;
       }
 
       return token;
@@ -70,8 +70,8 @@ const authOptions: NextAuthOptions = {
       // Add backend JWT to session
       console.log('🔐 [NextAuth] session callback');
       (session as any).backendToken = token.backendToken;
-      (session as any).refreshToken = token.refreshToken;
       (session as any).userId = token.userId;
+      (session as any).userPicture = token.userPicture;
 
       return session;
     },

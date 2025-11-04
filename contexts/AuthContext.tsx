@@ -37,16 +37,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session && (session as any).backendToken) {
       console.log('✅ [AuthContext] NextAuth session detected, saving JWT');
       localStorage.setItem('accessToken', (session as any).backendToken);
-      if ((session as any).refreshToken) {
-        localStorage.setItem('refreshToken', (session as any).refreshToken);
-      }
 
       // Save user data
       if (session.user) {
         const userData = {
-          userId: (session as any).userId || session.user.email || '',
+          userId: String((session as any).userId || session.user.email || ''),
           username: session.user.name || session.user.email?.split('@')[0] || 'User',
           email: session.user.email,
+          picture: (session as any).userPicture || session.user.image || '',
           isGuest: false,
         };
         localStorage.setItem('user', JSON.stringify(userData));
