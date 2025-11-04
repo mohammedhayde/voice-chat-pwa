@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scripts and binaries
+*.bat
+ngrok
+ngrok.exe
+
+# credentials and secrets
+*CREDENTIALS*.txt
+*SECRET*.txt
+*.key
+*.pem
+
+# temporary documentation
+*_TEMP.md
+*_OLD.md
+*_BACKUP.md
