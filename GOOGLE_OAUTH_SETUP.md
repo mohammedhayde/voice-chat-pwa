@@ -48,6 +48,7 @@ contexts/AuthContext.tsx                # Integrated with NextAuth
    - أضف **Authorized redirect URIs:**
      ```
      http://localhost:3000/api/auth/callback/google
+     https://drdsh.me/api/auth/callback/google
      https://un4chat.netlify.app/api/auth/callback/google
      ```
    - احفظ الـ **Client ID** و **Client Secret**
@@ -58,15 +59,17 @@ contexts/AuthContext.tsx                # Integrated with NextAuth
 
 ```env
 # NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=https://drdsh.me
 NEXTAUTH_SECRET=your-nextauth-secret-here
 
-# Google OAuth (استخدم القيم من Google Cloud Console)
+# Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-**لإنشاء NEXTAUTH_SECRET:**
+**ملاحظة:** للتطوير المحلي، يمكنك استخدام `http://localhost:3000` في `NEXTAUTH_URL`.
+
+**لإنشاء NEXTAUTH_SECRET جديد (اختياري):**
 ```bash
 openssl rand -base64 32
 ```
@@ -79,10 +82,10 @@ openssl rand -base64 32
 
 | Variable | Value |
 |----------|-------|
-| `NEXTAUTH_URL` | `https://un4chat.netlify.app` |
+| `NEXTAUTH_URL` | `https://drdsh.me` |
 | `NEXTAUTH_SECRET` | (القيمة من openssl) |
-| `GOOGLE_CLIENT_ID` | (Client ID من Google) |
-| `GOOGLE_CLIENT_SECRET` | (Client Secret من Google) |
+| `GOOGLE_CLIENT_ID` | (Client ID من Google Console) |
+| `GOOGLE_CLIENT_SECRET` | (Client Secret من Google Console) |
 
 ---
 
@@ -240,7 +243,7 @@ Tokens يتم تحديثها تلقائياً كل 10 دقائق عبر AuthCont
 ### المشكلة: "redirect_uri_mismatch"
 **الحل:** تأكد من إضافة redirect URI الصحيح في Google Cloud Console:
 ```
-https://un4chat.netlify.app/api/auth/callback/google
+https://drdsh.me/api/auth/callback/google
 ```
 
 ### المشكلة: "Invalid client secret"
